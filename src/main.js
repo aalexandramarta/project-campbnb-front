@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
+import '@/assets/styles/main.css' //so that my whole project uses the same font
 
 Vue.config.productionTip = false
 

@@ -1,20 +1,22 @@
 <template>
   <div id="app">
-    
+    <WelcomePage v-if="activePage == 'welcome'"/>
   </div>
 </template>
 
 <script>
 //import Component from './components/Component.vue'
+import WelcomePage from './pages/WelcomePage.vue';
 
 export default {
   name: 'App',
   data() {
     return {
-      
+      activePage: "welcome"
     }
   },
   components: {
+    WelcomePage
   },
   methods: {
     

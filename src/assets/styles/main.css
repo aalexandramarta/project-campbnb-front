@@ -1,0 +1,10 @@
+@font-face {
+    font-family: 'Armata';
+    src: url('@/assets/fonts/Armata.ttf') format('ttf');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  body {
+    font-family: 'Armata', sans-serif;
+  }
