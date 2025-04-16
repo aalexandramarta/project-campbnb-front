@@ -5,8 +5,8 @@
         <img src="@/assets/campbnb-logo-transparent.png" alt="CampBnB Logo" class="logo" />
       </div>
       <div class="button-group">
-        <router-link to="/login" class="btn">Log in</router-link> <!-- linking to the next page -->
-        <router-link to="/signup" class="btn">Sign up</router-link>
+        <button @click="goToLogin" class="btn">Log in</button> <!-- Trigger the login page -->
+        <button @click="goToSignup" class="btn">Sign up</button> <!-- Trigger the signup page -->
       </div>
     </div>
   </template>
@@ -14,6 +14,14 @@
   <script>
   export default {
     name: 'WelcomePage',
+    methods: {
+      goToLogin() {
+        this.$emit('changePage', 'login');
+      },
+      goToSignup() {
+        this.$emit('changePage', 'signup');
+      }
+    }
   }
   </script>
   
