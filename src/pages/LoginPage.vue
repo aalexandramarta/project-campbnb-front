@@ -6,19 +6,22 @@
       </div>
       <h2>Log in</h2>
       <div class="form-section">
-        <input
-          id="input_email"
-          type="email"
-          placeholder="Email"
-          v-model="email"
-        />
-        <input
-          id="input_password"
-          type="password"
-          placeholder="Password"
-          v-model="password"
-        />
-      <button class="btn" @click="fetchUser">Log in</button>
+        <div class="input-section">
+          <input
+            id="input_email"
+            type="email"
+            placeholder="Email"
+            v-model="email"
+          />
+          <input
+            id="input_password"
+            type="password"
+            placeholder="Password"
+            v-model="password"
+          />
+          <button class="btn" @click="fetchUser">Log in</button>
+        </div>
+      
     </div>
 
 
@@ -77,24 +80,64 @@
   </script>
   
   <style scoped>
-    .logo-section {
-    display: flex;
-    align-items: right;
-    justify-content: right;
-    margin: 1rem 0;
-  }
-  
-  .logo {
-    width: 250px;
-    height: auto;
-    margin-right: 0.5rem;
-  }
-  .btn {
-    background-color: #176A02;
-    color: white;
-    padding: 0.6rem 1.2rem;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 1rem;
-  }
+    
+    .login-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.logo-section {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.logo {
+  width: 180px;
+  height: auto;
+}
+
+h2 {
+  margin-bottom: 1rem;
+}
+
+.form-section {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.input-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.input-section input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.btn {
+  background-color: #176A02;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  text-decoration: none;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 100%;
+}
   </style> 

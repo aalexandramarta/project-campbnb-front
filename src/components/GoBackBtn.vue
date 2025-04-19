@@ -19,5 +19,8 @@
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
   }
   </style>
