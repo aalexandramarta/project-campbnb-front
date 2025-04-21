@@ -1,8 +1,6 @@
 <template>
     <div class="signup-container">
-      <div class="logo-section">
-          <img src="@/assets/campbnb-logo-transparent.png" alt="CampBnB Logo" class="logo" />
-      </div>
+      <LogoHeader></LogoHeader> 
       <h2>Sign up</h2>
       <!-- Signup form here -->
       <div class="form-section">
@@ -19,10 +17,12 @@
   
   <script>
   import GoBackBtn from '@/components/GoBackBtn.vue';
+  import LogoHeader from '@/components/LogoHeader.vue';
   export default {
     name: 'SignupPage',
     components: {
-      GoBackBtn
+      GoBackBtn,
+      LogoHeader
     },
     data() {
       return {
@@ -56,13 +56,12 @@
 
           const data = await response.json();
 
-          if (response.ok) {
-            console.log("Signup successful:", data);
-            alert("Account created! You can now log in.");
-            this.$emit('changePage', 'login');
-          } else {
-            alert(data.message || "Signup failed.");
-          }
+          if (data.user_id) {
+          localStorage.setItem("user", JSON.stringify(data));
+          this.$emit('changePage', 'home'); // Go to HomePage.vue
+        } else {
+          alert(data.message || "Signup failed.");
+        }
         } catch (error) {
           console.error("Signup error:", error);
           alert("Signup failed: " + error.message);
@@ -82,17 +81,6 @@
   justify-content: center;
   padding: 2rem;
   box-sizing: border-box;
-}
-
-.logo-section {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-}
-
-.logo {
-  width: 180px;
-  height: auto;
 }
 
 h2 {

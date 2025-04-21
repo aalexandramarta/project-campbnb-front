@@ -1,9 +1,7 @@
 <template>
     <div class="login-container">
       
-      <div class="logo-section">
-          <img src="@/assets/campbnb-logo-transparent.png" alt="CampBnB Logo" class="logo" />
-      </div>
+      <LogoHeader></LogoHeader>
       <h2>Log in</h2>
       <div class="form-section">
         <div class="input-section">
@@ -31,10 +29,13 @@
 
   <script>
   import GoBackBtn from '@/components/GoBackBtn.vue';
+  import LogoHeader from '@/components/LogoHeader.vue';
+
   export default {
   name: 'LoginPage',
   components: {
-    GoBackBtn
+    GoBackBtn,
+    LogoHeader
   },
   data() {
     return {
@@ -66,8 +67,8 @@
       })
       .then((user) => {
         console.log("Login successful:", user);
-        // Optional: emit event or navigate
-        this.$emit("loginSuccess", user);
+        localStorage.setItem("user", JSON.stringify(user)); // Save user
+        this.$emit("changePage", "home"); // Navigate to homepage
       })
       .catch((err) => {
         console.error("Login error:", err.message);
@@ -90,17 +91,6 @@
   justify-content: center;
   padding: 2rem;
   box-sizing: border-box;
-}
-
-.logo-section {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-}
-
-.logo {
-  width: 180px;
-  height: auto;
 }
 
 h2 {

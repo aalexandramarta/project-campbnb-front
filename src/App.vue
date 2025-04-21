@@ -9,14 +9,18 @@
     <div v-if="activePage === 'signup'">
       <SignupPage @changePage="setActivePage" />
     </div>
+    <div v-if="activePage === 'home'">
+      <HomePage @changePage="setActivePage" />
+    </div>
   </div>
 </template>
 
 <script>
 //import Component from './components/Component.vue'
 import WelcomePage from './pages/WelcomePage.vue';
-import LoginPage from './pages/LoginPage.vue'
-import SignupPage from './pages/SignupPage.vue'
+import LoginPage from './pages/LoginPage.vue';
+import SignupPage from './pages/SignupPage.vue';
+import HomePage from './pages/HomePage.vue'
 
 export default {
   name: 'App',
@@ -29,6 +33,7 @@ export default {
     WelcomePage,
     LoginPage,
     SignupPage,
+    HomePage
   },
   methods: {
     setActivePage(page) {
