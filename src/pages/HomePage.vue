@@ -8,7 +8,21 @@
         <input v-model="searchQuery" type="text" placeholder="Where do you want to go?" class="filter-input" />
         <input v-model="checkIn" type="date" class="filter-input" />
         <input v-model="checkOut" type="date" class="filter-input" />
-        <button @click="applyFilters" class="filter-button">Filter</button>
+        <button @click="toggleFilterPanel" class="filter-button">Advanced Filters</button>
+      </div>
+
+      <div v-if="showFilters" class="advanced-filters">
+        <label>
+          Max Price:
+          <input type="number" v-model.number="maxPrice" class="filter-input" />
+        </label>
+        <div class="amenities">
+          <label v-for="amenity in allAmenities" :key="amenity.id">
+            <input type="checkbox" :value="amenity.name" v-model="selectedAmenities" />
+            {{ amenity.name }}
+          </label>
+        </div>
+        <!-- <button @click="applyFilters" class="filter-button">Apply Filters</button> -->
       </div>
   
       <div class="map-view">Map view</div>
@@ -35,29 +49,78 @@
         searchQuery: '',
         checkIn: '',
         checkOut: '',
+        maxPrice: null,
+        selectedAmenities: [],
+        allAmenities: [],
+        showFilters: false,
         currentUser: null
       };
     },
     computed: {
       filteredSpots() {
-        return this.spots.filter(spot =>
-          spot.city.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+        return this.spots.filter(spot => {
+        const matchesCity = spot.city.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+        const matchesPrice = this.maxPrice ? spot.base_price <= this.maxPrice : true;
+        const matchesAmenities = this.selectedAmenities.every(amenity =>
+          spot.amenities.includes(amenity)
         );
+        return matchesCity && matchesPrice && matchesAmenities;
+        });
       }
     },
     methods: {
-      async fetchSpots() {
+      async fetchAmenities() {
         try {
-          const response = await fetch('http://localhost:3000/spot');
+          const response = await fetch('http://localhost:3000/amenitie');
           const data = await response.json();
-          this.spots = data;
+          this.allAmenities = data.map(amenity => ({
+            id: amenity.amenitie_id,
+            name: amenity.name
+          }));
         } catch (error) {
-          console.error('Error fetching spots:', error);
+          console.error('Error fetching amenities:', error);
         }
       },
+      async fetchSpots() {
+        try {
+          const [spotsResponse, amenitiesResponse] = await Promise.all([
+            fetch('http://localhost:3000/spot'),
+            fetch('http://localhost:3000/amenitie')
+          ]);
+
+          const spotsData = await spotsResponse.json();
+          const amenitiesData = await amenitiesResponse.json();
+
+          // Map of amenitie_id => amenity name
+          const amenityMap = {};
+          amenitiesData.forEach(amenity => {
+            amenityMap[amenity.amenitie_id] = amenity.name;
+          });
+
+          // Attach amenity names to each spot
+          this.spots = spotsData.map(spot => {
+            const amenityNames = spot.amenities_spots.map(as => amenityMap[as.amenitie_id]).filter(Boolean);
+            return {
+              ...spot,
+              amenities: amenityNames
+            };
+          });
+
+          // Also set the available amenities for filtering
+          this.allAmenities = amenitiesData.map(a => ({
+            id: a.amenitie_id,
+            name: a.name
+          }));
+
+        } catch (error) {
+          console.error('Error fetching spots or amenities:', error);
+        }
+      },
+      toggleFilterPanel() {
+        this.showFilters = !this.showFilters;
+      },
       applyFilters() {
-        // In this version, filters are only applied by city name.
-        // Add logic here if you want to use check-in/out dates for filtering later.
+        this.showFilters = false;
       },
       goToSpotDetail(spot) {
         console.log("Spot clicked:", spot);
@@ -73,6 +136,7 @@
             console.warn("No user found in localStorage.");
         }   
       this.fetchSpots();
+      this.fetchAmenities();
 
     }
   };
@@ -125,6 +189,20 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+}
+
+.advanced-filters {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
 }
   </style>
   

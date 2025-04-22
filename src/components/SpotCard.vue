@@ -14,7 +14,7 @@
     },
     computed: {
       imageUrl() {
-        return this.spot.pictures?.[0]?.url || 'https://via.placeholder.com/150';
+        return this.spot.pictures?.[0]?.url || require('@/assets/placeholder.jpeg');
       }
     },
     methods: {
