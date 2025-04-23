@@ -6,8 +6,16 @@
   
       <div class="filters-section">
         <input v-model="searchQuery" type="text" placeholder="Where do you want to go?" class="filter-input" />
-        <input v-model="checkIn" type="date" class="filter-input" />
-        <input v-model="checkOut" type="date" class="filter-input" />
+        <div class="date-filter">
+          <label for="checkIn">Check-in</label>
+          <input id="checkIn" v-model="checkIn" type="date" class="filter-input" />
+        </div>
+
+        <div class="date-filter">
+          <label for="checkOut">Check-out</label>
+          <input id="checkOut" v-model="checkOut" type="date" class="filter-input" />
+        </div>
+
         <button @click="toggleFilterPanel" class="filter-button">Advanced Filters</button>
       </div>
 
@@ -17,6 +25,7 @@
           <input type="number" v-model.number="maxPrice" class="filter-input" />
         </label>
         <div class="amenities">
+          Amenities: 
           <label v-for="amenity in allAmenities" :key="amenity.id">
             <input type="checkbox" :value="amenity.name" v-model="selectedAmenities" />
             {{ amenity.name }}
@@ -24,6 +33,7 @@
         </div>
         <!-- <button @click="applyFilters" class="filter-button">Apply Filters</button> -->
       </div>
+      <p v-if="dateError" class="error-message">Check-in date must be before check-out date.</p>
   
       <div class="map-view">Map view</div>
   
@@ -53,19 +63,44 @@
         selectedAmenities: [],
         allAmenities: [],
         showFilters: false,
-        currentUser: null
+        currentUser: null,
+        dateError: false
       };
     },
     computed: {
       filteredSpots() {
+
         return this.spots.filter(spot => {
         const matchesCity = spot.city.name.toLowerCase().includes(this.searchQuery.toLowerCase());
         const matchesPrice = this.maxPrice ? spot.base_price <= this.maxPrice : true;
         const matchesAmenities = this.selectedAmenities.every(amenity =>
           spot.amenities.includes(amenity)
         );
-        return matchesCity && matchesPrice && matchesAmenities;
+        if (this.checkIn && this.checkOut && new Date(this.checkIn) >= new Date(this.checkOut)) {
+          this.dateError = true;
+
+        } else {
+          this.dateError = false;
+        }
+        // Only check booking conflicts if both dates are selected
+        const hasDateConflict = () => {
+          if (!this.checkIn || !this.checkOut) return false;
+
+          const selectedStart = new Date(this.checkIn);
+          const selectedEnd = new Date(this.checkOut);
+
+          return spot.booking.some(booking => {
+            const bookingStart = new Date(booking.start_date);
+            const bookingEnd = new Date(booking.end_date);
+
+            // Overlapping logic
+            return selectedStart < bookingEnd && selectedEnd > bookingStart;
+          });
+        };
+
+        return matchesCity && matchesPrice && matchesAmenities && !hasDateConflict();
         });
+        
       }
     },
     methods: {
@@ -99,7 +134,9 @@
 
           // Attach amenity names to each spot
           this.spots = spotsData.map(spot => {
-            const amenityNames = spot.amenities_spots.map(as => amenityMap[as.amenitie_id]).filter(Boolean);
+            const amenityNames = (spot.amenities_spots || [])
+            .map(as => amenityMap[as.amenitie_id])
+            .filter(Boolean);
             return {
               ...spot,
               amenities: amenityNames
@@ -124,7 +161,7 @@
       },
       goToSpotDetail(spot) {
         console.log("Spot clicked:", spot);
-        //this.$emit('changePage', 'spotDetail', spot);
+        this.$emit('changePage', 'spotDetail', spot);
       }
     },
     mounted() {
@@ -158,6 +195,8 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .filter-input {
@@ -203,6 +242,12 @@
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 0.5rem;
+}
+
+.error-message {
+  color: red;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
 }
   </style>
   

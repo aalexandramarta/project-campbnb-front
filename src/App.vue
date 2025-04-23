@@ -12,6 +12,9 @@
     <div v-if="activePage === 'home'">
       <HomePage @changePage="setActivePage" />
     </div>
+    <div v-if="activePage === 'spotDetail'">
+      <SpotDetail :spot="selectedSpot" @changePage="setActivePage" />
+    </div>
   </div>
 </template>
 
@@ -21,23 +24,30 @@ import WelcomePage from './pages/WelcomePage.vue';
 import LoginPage from './pages/LoginPage.vue';
 import SignupPage from './pages/SignupPage.vue';
 import HomePage from './pages/HomePage.vue'
+import SpotDetail from './pages/SpotDetail.vue'; 
+
 
 export default {
   name: 'App',
   data() {
     return {
-      activePage: "welcome"
+      activePage: "welcome",
+      selectedSpot: null
     }
   },
   components: {
     WelcomePage,
     LoginPage,
     SignupPage,
-    HomePage
+    HomePage,
+    SpotDetail
   },
   methods: {
-    setActivePage(page) {
+    setActivePage(page, spot = null) {
       this.activePage = page;
+      if (page === 'spotDetail' && spot) {
+        this.selectedSpot = spot; // Store the spot data for the spot detail page
+      }
     }
   }
 }
