@@ -15,6 +15,10 @@
     <div v-if="activePage === 'spotDetail'">
       <SpotDetail :spot="selectedSpot" @changePage="setActivePage" />
     </div>
+    <div v-if="activePage === 'profile'">
+      <ProfilePage @changePage="(page, spot) => setActivePage(page, spot)" />
+    </div>
+    
   </div>
 </template>
 
@@ -25,6 +29,7 @@ import LoginPage from './pages/LoginPage.vue';
 import SignupPage from './pages/SignupPage.vue';
 import HomePage from './pages/HomePage.vue'
 import SpotDetail from './pages/SpotDetail.vue'; 
+import ProfilePage from './pages/ProfilePage.vue';
 
 
 export default {
@@ -40,7 +45,8 @@ export default {
     LoginPage,
     SignupPage,
     HomePage,
-    SpotDetail
+    SpotDetail,
+    ProfilePage
   },
   methods: {
     setActivePage(page, spot = null) {

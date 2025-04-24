@@ -1,6 +1,7 @@
 <template>
     <div class="main-page">
       <LogoHeader></LogoHeader>
+      <button @click="goToProfile" class="profile-button">My Profile</button>
       <h2 class="page-heading">Home page</h2>
       <p v-if="currentUser">Welcome, {{ currentUser.name }}!</p>
   
@@ -162,6 +163,9 @@
       goToSpotDetail(spot) {
         console.log("Spot clicked:", spot);
         this.$emit('changePage', 'spotDetail', spot);
+      },
+      goToProfile() {
+        this.$emit('changePage', 'profile');
       }
     },
     mounted() {
@@ -248,6 +252,15 @@
   color: red;
   margin-top: -1rem;
   margin-bottom: 1rem;
+}
+.profile-button {
+  background-color: #92A985;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
 }
   </style>
   

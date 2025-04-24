@@ -1,5 +1,5 @@
 <template>
-    <div class="spot-detail">
+    <div class="spot-detail" v-if="spot">
       <LogoHeader></LogoHeader> 
       <!-- Spot Name -->
         <h2 class="spot-title">{{ spot.name }}</h2>
@@ -17,7 +17,7 @@
             
             <div class="amenities">
                 <h4>Amenities:</h4>
-                <ul v-if="spot.amenities.length > 0">
+                <ul v-if="spot && spot.amenities && spot.amenities.length > 0">
                     <li v-for="(a, i) in spot.amenities" :key="i">
                         - {{ a}}
                     </li>
@@ -27,7 +27,7 @@
 
             <div class="reviews">
             <h4>Reviews:</h4>
-            <div v-if="spot.review.length">
+            <div v-if="spot && spot.review && spot.review.length">
                 <div v-for="(rev, idx) in spot.review" :key="idx" class="review">
                 <p><strong>{{ rev.user?.name || 'User' }}</strong>: {{ rev.comment }}</p>
                 </div>
@@ -40,11 +40,14 @@
 
     <!-- Right Column: Booking -->
     <div class="booking-panel">
-        <BookingPanel :spot="spot" />
+        <BookingPanel :spot="spot" @changePage="setActivePage" />
     </div>
     </div>
 
     <GoBackBtn @goBack="goBack" />
+    </div>
+    <div v-else>
+      <p>Loading spot details...</p>
     </div>
   </template>
   
@@ -68,6 +71,9 @@
         },
         mounted() {
             console.log("Amenities spots:", this.spot.amenities_spots);
+        },
+        setActivePage(page) {
+          this.$emit('changePage', page);
         }
     },
     props: ['spot'],
