@@ -18,6 +18,12 @@
     <div v-if="activePage === 'profile'">
       <ProfilePage @changePage="(page, spot) => setActivePage(page, spot)" />
     </div>
+    <div v-if="activePage === 'propertyDetail'">
+      <ManageProperty :spot="selectedSpot" @changePage="(page, spot) => setActivePage(page, spot)" @spotDeleted="handleSpotDeleted" />
+    </div>
+    <div v-if="activePage === 'addProperty'">
+      <AddProperty  :currentUser="currentUser" @propertyAdded="refreshUser" @changePage="(page) => setActivePage(page)" />
+    </div>
     
   </div>
 </template>
@@ -30,6 +36,8 @@ import SignupPage from './pages/SignupPage.vue';
 import HomePage from './pages/HomePage.vue'
 import SpotDetail from './pages/SpotDetail.vue'; 
 import ProfilePage from './pages/ProfilePage.vue';
+import ManageProperty from './pages/ManageProperty.vue';
+import AddProperty from './pages/AddProperty.vue';
 
 
 export default {
@@ -46,15 +54,26 @@ export default {
     SignupPage,
     HomePage,
     SpotDetail,
-    ProfilePage
+    ProfilePage,
+    ManageProperty,
+    AddProperty
   },
   methods: {
     setActivePage(page, spot = null) {
       this.activePage = page;
-      if (page === 'spotDetail' && spot) {
+      if (page === 'spotDetail' || page === 'propertyDetail'  && spot) {
         this.selectedSpot = spot; // Store the spot data for the spot detail page
       }
-    }
+    },
+    async refreshUser() {
+      if (!this.currentUser?.user_id) return;
+      try {
+        const res = await fetch(`http://localhost:3000/user/${this.currentUser.user_id}`);
+        this.currentUser = await res.json();
+      } catch (err) {
+        console.error("Failed to refresh user data", err);
+      }
+    },
   }
 }
 </script>

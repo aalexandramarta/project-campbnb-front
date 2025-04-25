@@ -1,17 +1,42 @@
 <template>
     <div class="profile-page" v-if="user">
-        <LogoHeader></LogoHeader> 
+      <LogoHeader></LogoHeader>
       <h2 class="page-heading">My Profile</h2>
-      <p><strong>Name:</strong> {{ user.name }}</p>
-      <p><strong>Email:</strong> {{ user.email }}</p>
-  
+      <div class="profile-header">
+        <p>
+          <strong>Name:</strong>
+          <span v-if="!isEditing">{{ user.name }}</span>
+          <input v-else v-model="editedUser.name" />
+          <button @click="toggleEdit">✏️</button>
+        </p>
+
+        <p>
+          <strong>Email:</strong>
+          <span v-if="!isEditing">{{ user.email }}</span>
+          <input v-else v-model="editedUser.email" />
+          <button @click="toggleEdit">✏️</button>
+        </p>
+
+        <p>
+          <strong>Password:</strong>
+          <span v-if="!isEditing">********</span>
+          <input v-else type="password" v-model="editedUser.password" />
+          <button @click="toggleEdit">✏️</button>
+        </p>
+      </div>
+      <!-- Save / Cancel buttons -->
+      <div v-if="isEditing">
+        <button class="action-button" @click="saveChanges">Save</button>
+        <button class="logout-button" @click="cancelEdit">Cancel</button>
+      </div>
+
       <div class="section">
         <h3>Favorites</h3>
         <div v-if="user.favorites.length" class="spot-cards">
           <SpotCard
-            v-for="spot in user.favorites"
-            :key="spot.spot_id"
-            :spot="spot"
+            v-for="favorite in user.favorites"
+            :key="favorite.camping_spot.spot_id"
+            :spot="favorite.camping_spot"
             @spotClicked="goToSpotDetail"
           />
         </div>
@@ -21,8 +46,9 @@
       <div class="section">
         <h3>My Bookings</h3>
         <ul v-if="user.booking.length">
-          <li v-for="booking in user.booking" :key="booking.booking_id">
-            Spot {{ booking.booking_id }} — {{ formatDate(booking.start_date) }} to {{ formatDate(booking.end_date) }} | ${{ booking.price }}/night
+          <li v-for="booking in user.booking" :key="booking.booking_id" class="booking-item">
+            {{ booking.camping_spot.name }} from {{ formatDate(booking.start_date) }} to {{ formatDate(booking.end_date) }}
+            <button @click="manageBooking(booking)" class="manage-button">Manage My Booking</button>
           </li>
         </ul>
         <p v-else>No bookings yet.</p>
@@ -33,6 +59,7 @@
         <ul v-if="user.camping_spot.length">
           <li v-for="spot in user.camping_spot" :key="spot.spot_id">
             {{ spot.name }} — {{ spot.location }}
+            <button @click="manageProperty(spot)" class="manage-button">Manage My Property</button>
           </li>
         </ul>
         <p v-else>You haven't added any properties.</p>
@@ -40,7 +67,10 @@
       </div>
   
       <button class="logout-button" @click="logout">Logout</button>
+      <button class="delete-button" @click="deleteAccount">Delete account</button>
       <GoBackBtn @goBack="goBack" />
+        
+    
     </div>
     <div v-else>Loading...</div>
   </template>
@@ -57,6 +87,8 @@
       return {
         user: null,
         allSpots: [],
+        isEditing: false,
+        editedUser: {}
       };
     },
     computed: {
@@ -91,7 +123,50 @@
       },
       goBack() {
         this.$emit('changePage', 'home');
+      },
+      async deleteAccount() {
+        try {
+          await fetch(`http://localhost:3000/user/${this.user.user_id}`, {
+            method: 'DELETE'
+          });
+          localStorage.removeItem("user");
+          this.$emit('changePage', 'welcome');
+        } catch (err) {
+          console.error("Error deleting user:", err);
+        }
+      },
+      toggleEdit() {
+        this.isEditing = true;
+        this.editedUser = { ...this.user };
+      },
+      cancelEdit() {
+        this.isEditing = false;
+      },
+      async saveChanges() {
+        try {
+          const res = await fetch(`http://localhost:3000/user/${this.user.user_id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.editedUser)
+          });
+          const updatedUser = await res.json();
+          this.user = updatedUser;
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          this.isEditing = false;
+        } catch (error) {
+          console.error("Error updating profile:", error);
+        }
+      },
+      manageBooking(booking) {
+        console.log('Manage booking clicked:', booking);
+        this.$emit('changePage', 'bookingDetail', booking);
+      },
+      manageProperty(spot) {
+        console.log('Manage property clicked:', spot);
+        this.$emit('changePage', 'propertyDetail', spot);
       }
+      
+
     },
     mounted() {
       const storedUser = localStorage.getItem("user");
@@ -105,14 +180,24 @@
   
   <style scoped>
   .profile-page {
-    padding: 2rem;
-    max-width: 900px;
-    margin: auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0 auto;
   }
-  .page-heading {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
+  .profile-header {
+    display: flex;
+    flex-direction: column; /* stacks items vertically */
+    align-items: flex-start; /* aligns to the left */
+    gap: 0.5rem;
   }
+
+  input {
+    margin-left: 0.5rem;
+    padding: 0.25rem;
+  }
+
   .section {
     margin-top: 2rem;
   }
@@ -140,5 +225,28 @@
     border-radius: 6px;
     cursor: pointer;
   }
+  .delete-button {
+    margin-top: 1rem;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .manage-button {
+    margin-left: 1rem;
+    background-color: #176a02;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .booking-item{
+    margin-bottom: 0.8rem;
+  }
+
   </style>
   

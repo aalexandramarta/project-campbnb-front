@@ -13,12 +13,12 @@
         <div class="spot-content">
         <!-- Left Column: Overview -->
         <div class="overview">
-            <p class="description">{{ spot.description }}</p>
+            <p class="description">{{ resolvedSpot.description }}</p>
             
             <div class="amenities">
                 <h4>Amenities:</h4>
-                <ul v-if="spot && spot.amenities && spot.amenities.length > 0">
-                    <li v-for="(a, i) in spot.amenities" :key="i">
+                <ul v-if="resolvedSpot && resolvedSpot.amenities && resolvedSpot.amenities.length > 0">
+                    <li v-for="(a, i) in resolvedSpot.amenities" :key="i">
                         - {{ a}}
                     </li>
                 </ul>
@@ -27,8 +27,8 @@
 
             <div class="reviews">
             <h4>Reviews:</h4>
-            <div v-if="spot && spot.review && spot.review.length">
-                <div v-for="(rev, idx) in spot.review" :key="idx" class="review">
+            <div v-if="resolvedSpot && resolvedSpot.review && resolvedSpot.review.length">
+                <div v-for="(rev, idx) in resolvedSpot.review" :key="idx" class="review">
                 <p><strong>{{ rev.user?.name || 'User' }}</strong>: {{ rev.comment }}</p>
                 </div>
             </div>
@@ -64,6 +64,11 @@
       LogoHeader,
       BookingPanel
     },
+    data() {
+      return {
+        resolvedSpot: null
+      };
+    },
     methods: {
         goBack() {
             console.log("GoBack clicked, emitting changePage event");
@@ -78,16 +83,21 @@
     },
     props: ['spot'],
     watch: {
-        spot: {
-            handler(newSpot) {
-            if (newSpot) {
-                console.log("Spot data received:", newSpot);
-                console.log("Amenities spots:", newSpot.amenities_spots);
-            }
-            },
-            immediate: true, // Run immediately if data is already present
-            deep: true
-        }
+      spot: {
+        handler(newSpot) {
+          if (newSpot) {
+          // clone and resolve amenities
+          const enriched = {
+            ...newSpot,
+            amenities: newSpot.amenities || 
+              (newSpot.amenities_spots || []).map(a => a.amenities?.name).filter(Boolean)
+          };
+          this.resolvedSpot = enriched;
+          }
+        },
+        immediate: true,
+        deep: true
+      } 
     }
     
   };
