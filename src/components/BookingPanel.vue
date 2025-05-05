@@ -46,7 +46,7 @@
             const checkInDate = new Date(this.checkIn);
             const checkOutDate = new Date(this.checkOut);
 
-            // Basic date validation
+            // Checkin is before checkout
             if (!this.checkIn || !this.checkOut || checkInDate >= checkOutDate) {
             this.dateError = true;
             return;
@@ -98,7 +98,8 @@
 
             if (response.ok) {
                 alert("Booking successful!");
-                // Optionally: emit event or update parent component
+                // Emit to home so it refetches spots with bookings
+                this.$emit("bookingSuccess"); 
                 this.$emit('changePage', 'home');
             } else {
                 alert("Error creating booking: " + result.message);

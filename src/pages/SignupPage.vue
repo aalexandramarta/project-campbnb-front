@@ -57,7 +57,7 @@
           const data = await response.json();
 
           if (data.user_id) {
-          localStorage.setItem("user", JSON.stringify(data));
+          this.$emit("loginSuccess", data);
           this.$emit('changePage', 'home'); // Go to HomePage.vue
         } else {
           alert(data.message || "Signup failed.");
@@ -72,7 +72,7 @@
   </script>
   
   <style scoped>
-  .signup-container {
+.signup-container {
   position: relative;
   min-height: 80vh;
   display: flex;
@@ -87,7 +87,6 @@ h2 {
   margin-bottom: 1rem;
 }
 
-/* Form layout */
 .form-section {
   display: flex;
   flex-direction: column;
@@ -117,5 +116,4 @@ input {
   border: none;
   width: 100%;
 }
-
   </style>

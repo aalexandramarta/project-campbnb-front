@@ -32,11 +32,11 @@
             {{ amenity.name }}
           </label>
         </div>
-        <!-- <button @click="applyFilters" class="filter-button">Apply Filters</button> -->
+        
       </div>
       <p v-if="dateError" class="error-message">Check-in date must be before check-out date.</p>
   
-      <div class="map-view">Map view</div>
+      <!-- <div class="map-view">Map view</div> -->
   
       <div class="spot-cards">
         <SpotCard v-for="spot in filteredSpots" :key="spot.spot_id" :spot="spot" @spotClicked="goToSpotDetail"/>
@@ -72,7 +72,8 @@
       filteredSpots() {
 
         return this.spots.filter(spot => {
-        const matchesCity = spot.city.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+        const matchesCity =  !this.searchQuery || 
+        (spot.city?.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ?? false);
         const matchesPrice = this.maxPrice ? spot.base_price <= this.maxPrice : true;
         const matchesAmenities = this.selectedAmenities.every(amenity =>
           spot.amenities.includes(amenity)
@@ -127,7 +128,7 @@
           const spotsData = await spotsResponse.json();
           const amenitiesData = await amenitiesResponse.json();
 
-          // Map of amenitie_id => amenity name
+          // Map of amenitie_id => amenity name, extract the names
           const amenityMap = {};
           amenitiesData.forEach(amenity => {
             amenityMap[amenity.amenitie_id] = amenity.name;
@@ -144,7 +145,7 @@
             };
           });
 
-          // Also set the available amenities for filtering
+          // Set all amenities from db for filtering
           this.allAmenities = amenitiesData.map(a => ({
             id: a.amenitie_id,
             name: a.name
@@ -156,9 +157,6 @@
       },
       toggleFilterPanel() {
         this.showFilters = !this.showFilters;
-      },
-      applyFilters() {
-        this.showFilters = false;
       },
       goToSpotDetail(spot) {
         console.log("Spot clicked:", spot);

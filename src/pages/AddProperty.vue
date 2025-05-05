@@ -39,6 +39,21 @@
               {{ amenity.name }}
             </label>
           </div>
+
+          <!-- New-amenity input -->
+          <div class="new-amenity">
+            <input
+              v-model="newAmenityName"
+              placeholder="Add new amenity"
+            />
+            <button type="button" @click="addAmenity">➕ Add</button>
+          </div>
+
+
+          <!-- Add pictures -->
+          <label>Upload Picture:</label>
+          <input type="file" @change="handleFilesUpload" accept="image/*" multiple />
+
         </div>
   
         <button type="submit">Create Property</button>
@@ -61,13 +76,15 @@
           longitude: null,
           country_id: null,
           city_id: null,
-          user_id: this.currentUser?.user_id,
-          created: new Date().toISOString()
+          created: new Date().toISOString(),
+         
         },
         countryName: '',
         cityName: '',
         allAmenities: [],
-        selectedAmenities: []
+        selectedAmenities: [],
+        selectedPictures: [],
+        newAmenityName: ''
       };
     },
     methods: {
@@ -83,8 +100,31 @@
           console.error('Failed to fetch amenities:', err);
         }
       },
+      async addAmenity() {
+        const name = this.newAmenityName.trim();
+        if (!name) return alert('Please enter a name for the new amenity.');
+
+        try {
+          const res = await fetch('http://localhost:3000/amenitie', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+          });
+          const created = await res.json();
+          // Add to list and select it
+          this.allAmenities.push({
+            id: created.amenitie_id,
+            name: created.name
+          });
+          this.selectedAmenities.push(created.amenitie_id);
+          this.newAmenityName = '';
+        } catch (err) {
+          console.error('Error creating amenity:', err);
+          alert('Could not add amenity.');
+        }
+      },
       async getOrCreateLocation() {
-        // 1. Get or create the country
+        // Get or create the country
         const countryRes = await fetch('http://localhost:3000/country', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -92,7 +132,7 @@
         });
         const country = await countryRes.json();
 
-        // 2. Get or create the city
+        // Get or create the city
         const cityRes = await fetch('http://localhost:3000/city', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -103,46 +143,90 @@
         });
         const city = await cityRes.json();
 
-        // 3. Set IDs on the spot object
+        // Set IDs on the spot object
         this.spot.country_id = country.country_id;
         this.spot.city_id = city.city_id;
       },
+      handleFilesUpload(event) {
+        this.selectedPictures = Array.from(event.target.files); // Multiple files
+      },
+      async uploadPictures(spotId) {
+        if (!this.selectedPictures.length) return; // No files selected
+
+        const formData = new FormData();
+        formData.append('spot_id', spotId);
+
+        this.selectedPictures.forEach((file) => {
+          formData.append('pictures', file); 
+        });
+
+        await fetch('http://localhost:3000/spot/pictures', {
+          method: 'POST',
+          body: formData
+        });
+      },
       async submitSpot() {
         try {
-            await this.getOrCreateLocation(); // ✅ get IDs based on names
+          console.log('Current user in submit:', this.currentUser);
+          await this.getOrCreateLocation(); // check if country_id and city_id are set
+          this.spot.user_id = this.currentUser?.user_id;
 
-            const res = await fetch('http://localhost:3000/spot', {
+          // Clean spot data
+          const spotPayload = {
+            user_id: this.spot.user_id,
+            country_id: this.spot.country_id,
+            city_id: this.spot.city_id,
+            name: this.spot.name,
+            location: this.spot.location,
+            description: this.spot.description,
+            base_price: this.spot.base_price,
+            created: this.spot.created,
+            latitude: this.spot.latitude !== null ? this.spot.latitude : undefined,
+            longitude: this.spot.longitude !== null ? this.spot.longitude : undefined,
+            amenities_spots: {
+              create: this.selectedAmenities.map(id => ({
+                amenitie_id: id
+              }))
+            }
+          };
+
+          const res = await fetch('http://localhost:3000/spot', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(this.spot)
-            });
+            body: JSON.stringify(spotPayload)
+          });
 
-            const createdSpot = await res.json();
+          const createdSpot = await res.json();
 
-            // Optional: link amenities
-            await Promise.all(
-            this.selectedAmenities.map(amenityId =>
-                fetch('http://localhost:3000/amenitie_spot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    amenitie_id: amenityId,
-                    spot_id: createdSpot.spot_id
-                })
-                })
-            )
-            );
+          await this.uploadPictures(createdSpot.spot_id);
 
-            alert('Property created!');
-            this.$emit('propertyAdded');
-            this.$emit('changePage', 'profile');
-
-        } catch (err) {
-            console.error('Error creating spot:', err);
-            alert('Something went wrong');
-        }
+          alert('Property created!');
+          this.spot = {
+            name: '',
+            description: '',
+            base_price: null,
+            location: '',
+            latitude: null,
+            longitude: null,
+            country_id: null,
+            city_id: null,
+            user_id: this.currentUser?.user_id,
+            created: new Date().toISOString()
+          };
+          this.countryName = '';
+          this.cityName = '';
+          this.selectedAmenities = [];
+          this.selectedPictures = [];
+          this.$emit('propertyAdded');
+          this.$emit('changePage', 'profile');
           
+        } catch (err) {
+          console.error('Error creating spot:', err);
+          alert('Something went wrong');
+        }
       }
+          
+      
     },
     mounted() {
       this.fetchAmenities();
@@ -186,6 +270,17 @@
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
+  }
+  .new-amenity {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .new-amenity input {
+    flex: 1;
+  }
+  .new-amenity button {
+    padding: 0.4rem 0.8rem;
   }
   </style>
   

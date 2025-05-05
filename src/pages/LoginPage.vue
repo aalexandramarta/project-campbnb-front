@@ -68,6 +68,7 @@
       .then((user) => {
         console.log("Login successful:", user);
         localStorage.setItem("user", JSON.stringify(user)); // Save user
+        this.$emit("loginSuccess", user);
         this.$emit("changePage", "home"); // Navigate to homepage
       })
       .catch((err) => {
@@ -82,7 +83,7 @@
   
   <style scoped>
     
-    .login-container {
+.login-container {
   position: relative;
   min-height: 80vh;
   display: flex;
