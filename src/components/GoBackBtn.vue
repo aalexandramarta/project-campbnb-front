@@ -12,6 +12,10 @@
   
   <style scoped>
   .go-back-btn {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 1000;           
     background-color: transparent;
     border: 1px solid #176A02;
     color: #176A02;
@@ -19,8 +23,5 @@
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
   }
   </style>

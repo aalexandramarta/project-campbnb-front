@@ -1,123 +1,153 @@
 <template>
-    <div class="booking-panel">
-      <h3>Book This Spot</h3>
-      <div class="date-filter">
-          <label for="checkIn">Check-in</label>
-          <input id="checkIn" v-model="checkIn" type="date" class="filter-input" />
-        </div>
-        <div class="date-filter">
-          <label for="checkOut">Check-out</label>
-          <input id="checkOut" v-model="checkOut" type="date" class="filter-input" />
-        </div>
-        <p v-if="dateError" class="error-message">Check-in date must be before check-out date.</p>
-      <p>{{ spot.base_price }} € per night</p>
-      <p v-if="totalPrice > 0"><strong>Total:</strong> {{ totalPrice }} €</p>
-      <button @click="bookSpot">Book Now</button>
+  <div class="booking-panel">
+    <h3>Book This Spot</h3>
+
+    <div class="date-filter">
+      <label for="checkIn">Check-in</label>
+      <Datepicker
+        id="checkIn"
+        :value="checkIn"
+        @selected="val => checkIn = val"
+        :disabled-dates="disabledDates"
+        placeholder="Select a date"
+      />
     </div>
-  </template>
-  
-  <script>
-  export default {
-    name: 'BookingPanel',
-    data(){
-        return {
-        dateError: false,
-        checkIn: '',
-        checkOut: ''
-        }
+
+    <div class="date-filter">
+      <label for="checkOut">Check-out</label>
+      <Datepicker
+        id="checkOut"
+        :value="checkOut"
+        @selected="val => checkOut = val"
+        :disabled-dates="disabledDates"
+        placeholder="Select a date"
+      />
+    </div>
+
+    <p v-if="dateError" class="error-message">
+      Check-in date must be before check-out date.
+    </p>
+
+    <p>{{ spot.base_price }} € per night</p>
+    <p v-if="totalPrice > 0"><strong>Total:</strong> {{ totalPrice }} €</p>
+
+    <button @click="bookSpot">Book Now</button>
+  </div>
+</template>
+
+<script>
+import Datepicker from 'vuejs-datepicker';
+
+export default {
+  name: 'BookingPanel',
+  components: { Datepicker },
+  props: {
+    spot: { type: Object, required: true }
+  },
+  data() {
+    return {
+      checkIn: null,
+      checkOut: null,
+      dateError: false
+    };
+  },
+  computed: {
+    totalPrice() {
+      if (!this.checkIn || !this.checkOut) return 0;
+      const msPerDay = 1000 * 60 * 60 * 24;
+      // clear time portion
+      const inDate  = new Date(this.checkIn.getFullYear(), this.checkIn.getMonth(), this.checkIn.getDate());
+      const outDate = new Date(this.checkOut.getFullYear(), this.checkOut.getMonth(), this.checkOut.getDate());
+      const nights = Math.ceil((outDate - inDate) / msPerDay);
+      return nights > 0 ? nights * this.spot.base_price : 0;
     },
-    props: ['spot'],
-    computed: {
-        totalPrice() {
-            if (this.checkIn && this.checkOut) {
-            const checkInDate = new Date(this.checkIn);
-            const checkOutDate = new Date(this.checkOut);
-            const diffTime = checkOutDate - checkInDate;
-            const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return nights > 0 ? nights * this.spot.base_price : 0;
-            }
-            return 0;
+    disabledDates() {
+      return {
+        customPredictor: date => {
+          // midnight normalize
+          const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          return this.spot.booking.some(b => {
+            const start = new Date(b.start_date);
+            const end   = new Date(b.end_date);
+            // disable only dates strictly inside [start, end)
+            return d > start && d < end;
+          });
         }
-    },
-    methods: {
-        async bookSpot() {
-            this.dateError = false;
-
-            const checkInDate = new Date(this.checkIn);
-            const checkOutDate = new Date(this.checkOut);
-
-            // Checkin is before checkout
-            if (!this.checkIn || !this.checkOut || checkInDate >= checkOutDate) {
-            this.dateError = true;
-            return;
-            }
-
-
-            // Check for overlapping bookings
-            const hasConflict = this.spot.booking.some(b => {
-            const bookedStart = new Date(b.start_date);
-            const bookedEnd = new Date(b.end_date);
-            return (checkInDate < bookedEnd && checkOutDate > bookedStart);
-            });
-
-            if (hasConflict) {
-            alert("Selected dates are not available. Please choose a different range.");
-            return;
-            }
-
-            const user = JSON.parse(localStorage.getItem('user'));
-            const userId = user?.user_id;
-
-            if (!userId) {
-            alert("User not logged in. Please log in to book.");
-            return;
-            }
-            
-            const formattedCheckIn = checkInDate.toISOString();
-            const formattedCheckOut = checkOutDate.toISOString();
-
-            // No conflicts, proceed to post the booking
-            try {
-            const response = await fetch('http://localhost:3000/booking', {
-                method: 'POST',
-                headers: {
-                'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                user_id: userId, 
-                spot_id: this.spot.spot_id,
-                start_date: formattedCheckIn,
-                end_date: formattedCheckOut,
-                status_id: 1,
-                price: this.spot.base_price
-                })
-            });
-
-            const result = await response.json();
-            
-
-            if (response.ok) {
-                alert("Booking successful!");
-                // Emit to home so it refetches spots with bookings
-                this.$emit("bookingSuccess"); 
-                this.$emit('changePage', 'home');
-            } else {
-                alert("Error creating booking: " + result.message);
-            }
-            } catch (err) {
-            console.log("Booking error:", err);
-            alert("An error occurred while booking.");
-            }
-        }
+      };
     }
-  };
-  </script>
-  
-  <style scoped>
-  .booking-panel {
-    border: 1px solid #ccc;
-    padding: 1rem;
-    border-radius: 8px;
-    background: #fff;
+  },
+  methods: {
+    async bookSpot() {
+      this.dateError = false;
+      if (!this.checkIn || !this.checkOut || this.checkIn >= this.checkOut) {
+        this.dateError = true;
+        return;
+      }
+
+      // check conflicts (just in case)
+      const hasConflict = this.spot.booking.some(b => {
+        const s = new Date(b.start_date);
+        const e = new Date(b.end_date);
+        return this.checkIn < e && this.checkOut > s;
+      });
+      if (hasConflict) {
+        alert('Selected dates conflict with an existing booking.');
+        return;
+      }
+
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!user.user_id) {
+        alert('Please log in to book.');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/booking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id:    user.user_id,
+            spot_id:    this.spot.spot_id,
+            start_date: this.checkIn.toISOString(),
+            end_date:   this.checkOut.toISOString(),
+            status_id:  1,
+            price:      this.spot.base_price
+          })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message || 'Booking failed');
+        alert('Booking successful!');
+        this.$emit('bookingSuccess');
+        this.$emit('changePage', 'home');
+      } catch (err) {
+        console.error('Booking error:', err);
+        alert('Error: ' + err.message);
+      }
+    }
   }
-  </style>
+};
+</script>
+
+<style scoped>
+.booking-panel {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #fff;
+}
+.date-filter {
+  margin-bottom: 0.75rem;
+}
+.error-message {
+  color: red;
+  margin-bottom: 0.75rem;
+}
+button {
+  background: #176a02;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+</style>

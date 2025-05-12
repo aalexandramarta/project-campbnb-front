@@ -76,6 +76,27 @@
         <button class="save-all-btn" @click="saveAllChanges">Save Changes</button>
       </div>
 
+      <!-- Reviews Section -->
+      <div class="reviews-section">
+        <h3>Reviews</h3>
+        <div v-if="spot.review && spot.review.length">
+          <div 
+            v-for="rev in spot.review" 
+            :key="rev.review_id"
+            class="review-item"
+          >
+            <p>
+              <strong>{{ rev.user?.name || 'Guest' }}</strong>
+              <span class="review-date">({{ formatDate(rev.created) }})</span>
+            </p>
+            <p>Rating: {{ rev.rating }} / 5</p>
+            <p class="review-comment">“{{ rev.comment }}”</p>
+          </div>
+        </div>
+        <p v-else class="no-reviews">No reviews yet.</p>
+      </div>
+
+
       <!-- Delete Spot -->
       <div class="footer">
         <button class="delete-btn" @click="deleteSpot">Delete Spot</button>
@@ -358,5 +379,31 @@ export default {
 .booker {
   margin-bottom: 0.25rem;
   display: block;
+}
+.reviews-section {
+  margin-top: 2rem;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 6px;
+}
+.review-item {
+  border-bottom: 1px solid #ddd;
+  padding: 0.5rem 0;
+}
+.review-item:last-child {
+  border: none;
+}
+.review-date {
+  color: #666;
+  font-size: 0.9em;
+  margin-left: 0.5em;
+}
+.review-comment {
+  font-style: italic;
+  margin: 0.25rem 0 0.75rem;
+}
+.no-reviews {
+  color: #888;
+  font-style: italic;
 }
 </style>

@@ -1,7 +1,9 @@
 <template>
     <div class="main-page">
       <LogoHeader></LogoHeader>
-      <button @click="goToProfile" class="profile-button">My Profile</button>
+      <button class="profile-icon-btn" @click="goToProfile">
+        <img src="@/assets/profile-icon.png" alt="My Profile" class="profile-icon" />
+      </button>
       <h2 class="page-heading">Home page</h2>
       <p v-if="currentUser">Welcome, {{ currentUser.name }}!</p>
   
@@ -251,14 +253,30 @@
   margin-top: -1rem;
   margin-bottom: 1rem;
 }
-.profile-button {
-  background-color: #92A985;
-  color: white;
-  padding: 0.5rem 1rem;
+.profile-icon-btn {
+  background: none;
   border: none;
-  border-radius: 8px;
+  padding: 0;
   cursor: pointer;
-  font-size: 1rem;
+  /* optionally position it absolutely in a corner: */
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: inline-block;    /* sits in flow below logo */
+  margin-top: 2.5rem;  
+}
+
+.profile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #176A02;
+  transition: transform .1s ease-in-out;
+}
+
+.profile-icon-btn:hover .profile-icon {
+  transform: scale(1.1);
 }
   </style>
   

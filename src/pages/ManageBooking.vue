@@ -8,6 +8,10 @@
         <p><strong>Spot:</strong> {{ booking.camping_spot?.name }}</p>
         <p><strong>Host:</strong> {{ booking.camping_spot?.user?.name }}</p>
         <p><strong>Host Email:</strong> {{ booking.camping_spot?.user?.email }}</p>
+
+        <!-- Booking Status -->
+        <p><strong>Status:</strong> {{ statusText(booking.status_id) }}</p>
+
   
         <!-- Dates & Pricing -->
         <p><strong>From:</strong> {{ formatDate(booking.start_date) }}</p>
@@ -165,6 +169,14 @@
       },
       goBack() {
         this.$emit("changePage", "profile");
+      },
+      statusText(id) {
+        switch (id) {
+          case 1: return "Pending";
+          case 2: return "Confirmed";
+          case 3: return "Declined";
+          default: return "Unknown";
+        }
       }
     }
   };

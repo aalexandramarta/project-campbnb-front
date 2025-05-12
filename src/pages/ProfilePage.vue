@@ -1,83 +1,85 @@
 <template>
   <div class="profile-page" v-if="user">
-    <LogoHeader></LogoHeader>
-    <h2 class="page-heading">My Profile</h2>
-    <div class="profile-header">
-      <p>
-        <strong>Name:</strong>
-        <span v-if="!isEditing">{{ user.name }}</span>
-        <input v-else v-model="editedUser.name" />
-        <button @click="toggleEdit">✏️</button>
-      </p>
+    <LogoHeader />
+    <div class="profile-container">
+      <h2 class="page-heading">My Profile</h2>
+      <div class="profile-header">
+        <div class="field-group">
+          <label>Name:</label>
+          <div v-if="!isEditing">{{ user.name }}</div>
+          <input v-else v-model="editedUser.name" class="field-input" />
+          <button @click="toggleEdit" class="edit-btn" v-if="!isEditing">Edit</button>
+        </div>
 
-      <p>
-        <strong>Email:</strong>
-        <span v-if="!isEditing">{{ user.email }}</span>
-        <input v-else v-model="editedUser.email" />
-        <button @click="toggleEdit">✏️</button>
-      </p>
+        <div class="field-group">
+          <label>Email:</label>
+          <div v-if="!isEditing">{{ user.email }}</div>
+          <input v-else v-model="editedUser.email" class="field-input" />
+          <button @click="toggleEdit" class="edit-btn" v-if="!isEditing">Edit</button>
+        </div>
 
-      <p>
-        <strong>Password:</strong>
-        <span v-if="!isEditing">********</span>
-        <input v-else type="password" v-model="editedUser.password" />
-        <button @click="toggleEdit">✏️</button>
-      </p>
-    </div>
+        <div class="field-group">
+          <label>Password:</label>
+          <div v-if="!isEditing">••••••••</div>
+          <input v-else type="password" v-model="editedUser.password" class="field-input" />
+          <button @click="toggleEdit" class="edit-btn" v-if="!isEditing">Edit</button>
+        </div>
 
-    <!-- Save / Cancel buttons -->
-    <div v-if="isEditing">
-      <button class="action-button" @click="saveChanges">Save</button>
-      <button class="logout-button" @click="cancelEdit">Cancel</button>
-    </div>
-
-    <div class="section">
-      <h3>Favorites</h3>
-      <div v-if="user && user.favorites && user.favorites.length" class="spot-cards">
-        <SpotCard
-          v-for="favorite in user.favorites"
-          :key="favorite.camping_spot.spot_id"
-          :spot="favorite.camping_spot"
-          @spotClicked="goToSpotDetail"
-        />
+        <div class="action-row" v-if="isEditing">
+          <button class="save-btn" @click="saveChanges">Save</button>
+          <button class="cancel-btn" @click="cancelEdit">Cancel</button>
+        </div>
       </div>
-      <p v-else>No favorites yet.</p>
-    </div>
 
-    <div class="section">
-      <h3>My Bookings</h3>
-      <ul v-if="user && user.booking && user.booking.length" class="spot-cards">
-        <li v-for="booking in user.booking" :key="booking.booking_id" class="booking-item">
-          <span v-if="booking.camping_spot">
-            {{ booking.camping_spot.name }} from {{ formatDate(booking.start_date) }} to {{ formatDate(booking.end_date) }}
-          </span>
-          <span v-else>
-            [Missing spot info] from {{ formatDate(booking.start_date) }} to {{ formatDate(booking.end_date) }}
-          </span>
-          <button @click="manageBooking(booking)" class="manage-button">Manage My Booking</button>
-        </li>
-      </ul>
-      <p v-else>No bookings yet.</p>
-    </div>
+      <section class="section">
+        <h3>Favorites</h3>
+        <div class="spot-cards">
+          <SpotCard
+            v-for="fav in user.favorites"
+            :key="fav.camping_spot.spot_id"
+            :spot="fav.camping_spot"
+            @spotClicked="goToSpotDetail"
+          />
+        </div>
+        <p v-if="!user.favorites.length" class="empty-text">No favorites yet.</p>
+      </section>
 
-    <div class="section">
-      <h3>My Properties</h3>
-      <ul v-if="userSpots.length">
-        <li v-for="spot in userSpots" :key="spot.spot_id">
-          {{ spot.name }} — {{ spot.location }}
-          <button @click="manageProperty(spot)" class="manage-button">Manage My Property</button>
-        </li>
-      </ul>
-      <p v-else>You haven't added any properties.</p>
-      <button class="action-button" @click="addNewProperty">Add New Property</button>
-    </div>
+      <section class="section bookings-section">
+        <h3>My Bookings</h3>
+        <ul v-if="user.booking.length" class="booking-list">
+          <li v-for="booking in user.booking" :key="booking.booking_id" class="booking-item">
+            <div class="booking-info">
+              <strong>{{ booking.camping_spot?.name || 'Unknown Spot' }}</strong>
+              <span>{{ formatDate(booking.start_date) }} → {{ formatDate(booking.end_date) }}</span>
+            </div>
+            <button class="manage-btn" @click="manageBooking(booking)">Manage</button>
+          </li>
+        </ul>
+        <p v-else class="empty-text">No bookings yet.</p>
+      </section>
 
-    <button class="logout-button" @click="logout">Logout</button>
-    <button class="delete-button" @click="deleteAccount">Delete account</button>
-    <GoBackBtn @goBack="goBack" />
+      <section class="section properties-section">
+        <h3>My Properties</h3>
+        <ul v-if="userSpots.length" class="properties-list">
+          <li v-for="spot in userSpots" :key="spot.spot_id" class="property-item">
+            <div>{{ spot.name }} — {{ spot.location }}</div>
+            <button class="manage-btn" @click="manageProperty(spot)">Manage</button>
+          </li>
+        </ul>
+        <p v-else class="empty-text">You haven't added any properties.</p>
+        <button class="add-btn" @click="addNewProperty">Add New Property</button>
+      </section>
+
+      <div class="footer-buttons">
+        <button class="logout-btn" @click="logout">Logout</button>
+        <button class="delete-btn" @click="deleteAccount">Delete Account</button>
+      </div>
+
+      <GoBackBtn @goBack="goBack" />
+    </div>
   </div>
 
-  <div v-else>Loading...</div>
+  <div v-else class="loading">Loading...</div>
 </template>
 
 <script>
@@ -91,64 +93,26 @@ export default {
   data() {
     return {
       user: null,
-      allSpots: [],
       userSpots: [],
       isEditing: false,
       editedUser: {}
     };
   },
-  computed: {
-    favoriteSpots() {
-      if (!this.user || !this.user.favorites) return [];
-      return this.user.favorites.map(f => f.camping_spot);
-    }
-  },
   methods: {
-    async fetchAllSpots() {
+    async refreshUserData() {
+      const stored = localStorage.getItem('user');
+      if (stored) this.user = JSON.parse(stored);
+      // fetch fresh data
       try {
-        const res = await fetch("http://localhost:3000/spot");
-        const data = await res.json();
-        this.allSpots = data;
-      } catch (err) {
-        console.error("Failed to fetch all spots:", err);
-      }
-    },
-    async fetchUserSpots() {
-      if (!this.user) return;
-      try {
-        const res = await fetch("http://localhost:3000/spot");
-        const allSpots = await res.json();
-        this.userSpots = allSpots.filter(spot => spot.user_id === this.user.user_id);
-      } catch (err) {
-        console.error("Failed to fetch user spots:", err);
-      }
-    },
-    formatDate(dateStr) {
-      const options = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateStr).toLocaleDateString(undefined, options);
-    },
-    goToSpotDetail(spot) {
-      this.$emit('changePage', 'spotDetail', spot);
-    },
-    addNewProperty() {
-      this.$emit('changePage', 'addProperty');
-    },
-    logout() {
-      localStorage.removeItem("user");
-      this.$emit('changePage', 'welcome');
-    },
-    goBack() {
-      this.$emit('changePage', 'home');
-    },
-    async deleteAccount() {
-      try {
-        await fetch(`http://localhost:3000/user/${this.user.user_id}`, {
-          method: 'DELETE'
-        });
-        localStorage.removeItem("user");
-        this.$emit('changePage', 'welcome');
-      } catch (err) {
-        console.error("Error deleting user:", err);
+        const res = await fetch(`http://localhost:3000/user/${this.user.user_id}`);
+        if (res.ok) {
+          const data = await res.json();
+          this.user = data;
+          localStorage.setItem('user', JSON.stringify(data));
+          this.userSpots = data.camping_spot;
+        }
+      } catch (e) {
+        console.error(e);
       }
     },
     toggleEdit() {
@@ -165,111 +129,90 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(this.editedUser)
         });
-        const updatedUser = await res.json();
-        this.user = updatedUser;
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+        if (res.ok) await this.refreshUserData();
         this.isEditing = false;
-      } catch (error) {
-        console.error("Error updating profile:", error);
-      }
+      } catch (e) { console.error(e); }
     },
-    manageBooking(booking) {
-      console.log('Manage booking clicked:', booking);
-      this.$emit('changePage', 'manageBooking', booking);
+    formatDate(d) {
+      return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     },
-    manageProperty(spot) {
-      console.log('Manage property clicked:', spot);
-      this.$emit('changePage', 'propertyDetail', spot);
+    goToSpotDetail(s) { this.$emit('changePage','spotDetail',s); },
+    manageBooking(b) { this.$emit('changePage','manageBooking',b); },
+    manageProperty(s) { this.$emit('changePage','propertyDetail',s); },
+    addNewProperty() { this.$emit('changePage','addProperty'); },
+    logout() {
+      localStorage.removeItem('user');
+      this.$emit('changePage','welcome');
     },
-    async refreshUserData() {
-      try {
-        const res = await fetch(`http://localhost:3000/user/${this.user.user_id}`);
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        const fresh = await res.json();
-        this.user = fresh;
-        localStorage.setItem("user", JSON.stringify(fresh));
-        this.userSpots = fresh.camping_spot;
-      } catch (err) {
-        console.error("Failed to refresh user data:", err);
-      }
-    }
+    async deleteAccount() {
+      if (!confirm('Delete your account?')) return;
+      await fetch(`http://localhost:3000/user/${this.user.user_id}`, { method:'DELETE' });
+      localStorage.removeItem('user');
+      this.$emit('changePage','welcome');
+    },
+    goBack() { this.$emit('changePage','home'); }
   },
   mounted() {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      this.user = JSON.parse(storedUser);
-    }
     this.refreshUserData();
-    this.fetchUserSpots();
   }
 };
 </script>
 
 <style scoped>
-.profile-page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
+.profile-container {
+  max-width: 800px;
   margin: 0 auto;
+  padding: 1rem;
+}
+.page-heading {
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 .profile-header {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 1rem;
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+}
+.field-group {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
-input {
-  margin-left: 0.5rem;
-  padding: 0.25rem;
+.field-input {
+  flex: 1;
+  padding: 0.4rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
 }
-.section {
-  margin-top: 2rem;
+.edit-btn {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
 }
-.spot-cards {
+.action-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem;
-  margin-top: 1rem;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
-.action-button {
-  margin-top: 1rem;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.logout-button {
-  margin-top: 3rem;
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.delete-button {
-  margin-top: 1rem;
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.manage-button {
-  margin-left: 1rem;
-  background-color: #176a02;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-.booking-item {
-  margin-bottom: 0.8rem;
-}
+.save-btn { background: #2563eb; color: #fff; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; }
+.cancel-btn { background: #f3f4f6; color:#374151; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; }
+.section { margin-top: 2rem; }
+.spot-cards { display: flex; flex-wrap: wrap; gap: 1rem; }
+.bookings-section .booking-list,
+.properties-section .properties-list { display: flex; flex-direction: column; gap: 1rem; }
+.booking-item, .property-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.manage-btn { background: #176a02; color:#fff; border:none; padding:0.4rem 0.8rem; border-radius:4px; cursor:pointer; }
+.add-btn { background: #2563eb; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer; margin-top:1rem; }
+.footer-buttons { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; }
+.logout-btn, .delete-btn { padding: 0.6rem 1.2rem; border-radius: 6px; border: none; cursor: pointer; }
+.logout-btn { background: #ef4444; color: #fff; }
+.delete-btn { background: #9ca3af; color: #fff; }
+.empty-text { color: #6b7280; font-style: italic; }
+.loading { text-align: center; padding: 2rem; }
 </style>
