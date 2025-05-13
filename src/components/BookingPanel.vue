@@ -6,10 +6,10 @@
       <label for="checkIn">Check-in</label>
       <Datepicker
         id="checkIn"
-        :value="checkIn"
-        @selected="val => checkIn = val"
-        :disabled-dates="disabledDates"
-        placeholder="Select a date"
+        :value="rawCheckIn"
+        @selected="onSelectCheckIn"
+        :disabled-dates="disabledDatesCheckIn"
+        placeholder="Select date"
       />
     </div>
 
@@ -17,19 +17,21 @@
       <label for="checkOut">Check-out</label>
       <Datepicker
         id="checkOut"
-        :value="checkOut"
-        @selected="val => checkOut = val"
-        :disabled-dates="disabledDates"
-        placeholder="Select a date"
+        :value="rawCheckOut"
+        @selected="onSelectCheckOut"
+        :disabled-dates="disabledDatesCheckOut"
+        placeholder="Select date"
       />
     </div>
 
     <p v-if="dateError" class="error-message">
-      Check-in date must be before check-out date.
+      Check-in must be before check-out.
     </p>
 
     <p>{{ spot.base_price }} € per night</p>
-    <p v-if="totalPrice > 0"><strong>Total:</strong> {{ totalPrice }} €</p>
+    <p v-if="totalPrice > 0">
+      <strong>Total:</strong> {{ totalPrice }} €
+    </p>
 
     <button @click="bookSpot">Book Now</button>
   </div>
@@ -46,8 +48,10 @@ export default {
   },
   data() {
     return {
-      checkIn: null,
-      checkOut: null,
+      rawCheckIn: null,    // Date from the picker
+      rawCheckOut: null,   // Date from the picker
+      checkIn: null,       // DateTime at 14:00
+      checkOut: null,      // DateTime at 10:00
       dateError: false
     };
   },
@@ -55,28 +59,73 @@ export default {
     totalPrice() {
       if (!this.checkIn || !this.checkOut) return 0;
       const msPerDay = 1000 * 60 * 60 * 24;
-      // clear time portion
-      const inDate  = new Date(this.checkIn.getFullYear(), this.checkIn.getMonth(), this.checkIn.getDate());
-      const outDate = new Date(this.checkOut.getFullYear(), this.checkOut.getMonth(), this.checkOut.getDate());
-      const nights = Math.ceil((outDate - inDate) / msPerDay);
+      const nights = Math.ceil((this.checkOut - this.checkIn) / msPerDay);
       return nights > 0 ? nights * this.spot.base_price : 0;
     },
-    disabledDates() {
-      return {
-        customPredictor: date => {
-          // midnight normalize
-          const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-          return this.spot.booking.some(b => {
-            const start = new Date(b.start_date);
-            const end   = new Date(b.end_date);
-            // disable only dates strictly inside [start, end)
-            return d > start && d < end;
+
+    // For check-in: disable any date d where  start ≤ d < end
+    disabledDatesCheckIn() {
+     return {
+      customPredictor: date => {
+        const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+        return this.spot.booking.some(b => {
+          // normalize booking start & end to midnight:
+          const startDay = new Date(b.start_date);
+          startDay.setHours(0, 0, 0, 0);
+
+          const endDay = new Date(b.end_date);
+          endDay.setHours(0, 0, 0, 0);
+
+          // disable any day from startDay (inclusive) up to endDay (exclusive)
+          return d >= startDay && d < endDay;
           });
         }
       };
+    },
+
+    // For check-out: disable any date d where  start < d ≤ end
+    disabledDatesCheckOut() {
+      return {
+      customPredictor: date => {
+        if (!this.checkIn) return false;
+        // normalize both dates to midnight
+        const d  = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const ci = new Date(this.checkIn.getFullYear(), this.checkIn.getMonth(), this.checkIn.getDate());
+
+        // 1) never allow checkout on or before your checkIn
+        if (d <= ci) return true;
+
+        // 2) disable any d for which [ci, d) overlaps an existing booking
+        return this.spot.booking.some(b => {
+          const s = new Date(b.start_date), e = new Date(b.end_date);
+          // normalize
+          s.setHours(0,0,0,0);
+          e.setHours(0,0,0,0);
+          // overlap happens if your checkIn < booking.end AND your chosen d > booking.start
+          return ci < e && d > s;
+        });
+      }
+    };
     }
   },
   methods: {
+    onSelectCheckIn(val) {
+      this.rawCheckIn = val;
+      if (val) {
+        this.checkIn = new Date(val.getFullYear(), val.getMonth(), val.getDate(), 16, 0, 0);
+      } else {
+        this.checkIn = null;
+      }
+    },
+    onSelectCheckOut(val) {
+      this.rawCheckOut = val;
+      if (val) {
+        this.checkOut = new Date(val.getFullYear(), val.getMonth(), val.getDate(), 12, 0, 0);
+      } else {
+        this.checkOut = null;
+      }
+    },
     async bookSpot() {
       this.dateError = false;
       if (!this.checkIn || !this.checkOut || this.checkIn >= this.checkOut) {
@@ -84,20 +133,20 @@ export default {
         return;
       }
 
-      // check conflicts (just in case)
-      const hasConflict = this.spot.booking.some(b => {
+      // final safety check
+      const conflict = this.spot.booking.some(b => {
         const s = new Date(b.start_date);
         const e = new Date(b.end_date);
         return this.checkIn < e && this.checkOut > s;
       });
-      if (hasConflict) {
-        alert('Selected dates conflict with an existing booking.');
+      if (conflict) {
+        alert('Conflict with existing booking.');
         return;
       }
 
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (!user.user_id) {
-        alert('Please log in to book.');
+        alert('Please log in.');
         return;
       }
 
@@ -116,11 +165,11 @@ export default {
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.message || 'Booking failed');
-        alert('Booking successful!');
+        alert('Booked!');
         this.$emit('bookingSuccess');
         this.$emit('changePage', 'home');
       } catch (err) {
-        console.error('Booking error:', err);
+        console.error(err);
         alert('Error: ' + err.message);
       }
     }

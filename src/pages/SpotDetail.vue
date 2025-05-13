@@ -17,7 +17,10 @@
 
     <div class="spot-content">
       <div class="overview">
-        <p class="description">{{ resolvedSpot.description }}</p>
+
+        <p class="location"><strong>Location: </strong>{{ resolvedSpot.location }}, {{ resolvedSpot.city?.name }}, {{ resolvedSpot.country?.name }}</p>
+
+        <p class="description"><strong>Description: </strong>{{ resolvedSpot.description }}</p>
 
         <div class="amenities">
           <h4>Amenities:</h4>
@@ -31,12 +34,16 @@
           <h4>Reviews:</h4>
           <div v-if="resolvedSpot.review.length">
             <div v-for="(rev, idx) in resolvedSpot.review" :key="idx" class="review">
-              <p><strong>{{ rev.user?.name || 'User' }}</strong>: {{ rev.comment }}</p>
+              <p><strong>{{ rev.user?.name || 'User' }}</strong>: {{ rev.rating }}/5 <br> {{ rev.comment }}</p>
             </div>
           </div>
           <p v-else>No reviews yet.</p>
         </div>
       </div>
+
+      <button class="fav-btn" @click="toggleFavorite">
+          {{ isFavorited ? "♡ Remove from favorites" : "❤️ Add to favorites" }}
+      </button>
 
       <div class="booking-panel">
         <BookingPanel
@@ -65,8 +72,16 @@ export default {
   props: ['spot'],
   data() {
     return {
-      resolvedSpot: null
+      resolvedSpot: null,
+      isFavorited: false
     };
+  },
+  async mounted() {
+    const u = localStorage.getItem("user");
+    if (u) this.currentUser = JSON.parse(u);
+
+    //set initial favorite state by checking spot.favorites
+    this.isFavorited = (this.spot.favorites || []).length > 0;
   },
   watch: {
     spot: {
@@ -103,6 +118,46 @@ export default {
     },
     goBack() {
       this.$emit('changePage', 'home');
+    },
+    async toggleFavorite() {
+      if (!this.currentUser) {
+        alert("Please log in to manage favorites.");
+        return;
+      }
+
+      try {
+        if (this.isFavorited) {
+          // remove: DELETE /favorite/:id
+          const fav = this.spot.favorites[0];
+          await fetch(`http://localhost:3000/favorite/${fav.favorite_id}`, {
+            method: "DELETE"
+          });
+          this.isFavorited = false;
+        } else {
+          // add: POST /favorite
+          await fetch("http://localhost:3000/favorite", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: this.currentUser.user_id,
+              spot_id: this.spot.spot_id
+            })
+          });
+          this.isFavorited = true;
+        }
+
+        // re-fetch the spot (to update the `favorites` array)
+        const res = await fetch(
+          `http://localhost:3000/spot/${this.spot.spot_id}?user_id=${this.currentUser.user_id}`
+        );
+        const updated = await res.json();
+        // replace the current spot with the updated one
+        this.$emit("changePage", "spotDetail", updated);
+
+      } catch (err) {
+        console.error("Favorite toggle failed", err);
+        alert("Something went wrong.");
+      }
     }
   }
 };
@@ -159,5 +214,17 @@ export default {
 .review { 
   border-bottom: 1px solid #ccc; 
   padding: 0.5rem 0; 
+}
+.fav-btn {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.fav-btn:hover {
+  opacity: 0.9;
 }
 </style>

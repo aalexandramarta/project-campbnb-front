@@ -200,19 +200,88 @@ export default {
   justify-content: flex-end;
   gap: 0.5rem;
 }
-.save-btn { background: #2563eb; color: #fff; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; }
-.cancel-btn { background: #f3f4f6; color:#374151; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; }
-.section { margin-top: 2rem; }
-.spot-cards { display: flex; flex-wrap: wrap; gap: 1rem; }
+.save-btn { 
+  background: #2563eb; 
+  color: #fff; 
+  border:none; 
+  padding:0.4rem 1rem; 
+  border-radius:4px; 
+  cursor:pointer; 
+}
+.cancel-btn {
+  background: #f3f4f6; 
+  color:#374151; 
+  border:none; 
+  padding:0.4rem 1rem; 
+  border-radius:4px; 
+  cursor:pointer; 
+ }
+.section { 
+  margin-top: 2rem; 
+}
+.spot-cards { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 1rem; 
+}
 .bookings-section .booking-list,
-.properties-section .properties-list { display: flex; flex-direction: column; gap: 1rem; }
-.booking-item, .property-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-.manage-btn { background: #176a02; color:#fff; border:none; padding:0.4rem 0.8rem; border-radius:4px; cursor:pointer; }
-.add-btn { background: #2563eb; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer; margin-top:1rem; }
-.footer-buttons { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; }
-.logout-btn, .delete-btn { padding: 0.6rem 1.2rem; border-radius: 6px; border: none; cursor: pointer; }
-.logout-btn { background: #ef4444; color: #fff; }
-.delete-btn { background: #9ca3af; color: #fff; }
-.empty-text { color: #6b7280; font-style: italic; }
-.loading { text-align: center; padding: 2rem; }
+.properties-section .properties-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1rem; 
+}
+.booking-item, .property-item { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 0.8rem; 
+  background: #fff; 
+  border-radius: 6px; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+}
+.manage-btn { 
+  background: #176a02; 
+  color:#fff; 
+  border:none; 
+  padding:0.4rem 0.8rem; 
+  border-radius:4px; 
+  cursor:pointer; 
+}
+.add-btn { 
+  background: #2563eb; 
+  color:#fff; 
+  border:none; 
+  padding:0.6rem 1.2rem; 
+  border-radius:6px; 
+  cursor:pointer; 
+  margin-top:1rem; 
+}
+.footer-buttons { 
+  display: flex; 
+  justify-content: center; 
+  gap: 1rem; 
+  margin: 2rem 0; 
+}
+.logout-btn, .delete-btn { 
+  padding: 0.6rem 1.2rem; 
+  border-radius: 6px; 
+  border: none; 
+  cursor: pointer; 
+}
+.logout-btn { 
+  background: #ef4444; 
+  color: #fff; 
+}
+.delete-btn { 
+  background: #9ca3af; 
+  color: #fff; 
+}
+.empty-text { 
+  color: #6b7280; 
+  font-style: italic; 
+}
+.loading { 
+  text-align: center; 
+  padding: 2rem; 
+}
 </style>
