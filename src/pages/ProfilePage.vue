@@ -18,12 +18,7 @@
           <button @click="toggleEdit" class="edit-btn" v-if="!isEditing">Edit</button>
         </div>
 
-        <div class="field-group">
-          <label>Password:</label>
-          <div v-if="!isEditing">••••••••</div>
-          <input v-else type="password" v-model="editedUser.password" class="field-input" />
-          <button @click="toggleEdit" class="edit-btn" v-if="!isEditing">Edit</button>
-        </div>
+
 
         <div class="action-row" v-if="isEditing">
           <button class="save-btn" @click="saveChanges">Save</button>
@@ -36,7 +31,7 @@
         <div class="spot-cards">
           <SpotCard
             v-for="fav in user.favorites"
-            :key="fav.camping_spot.spot_id"
+            :key="fav.spot_id"
             :spot="fav.camping_spot"
             @spotClicked="goToSpotDetail"
           />

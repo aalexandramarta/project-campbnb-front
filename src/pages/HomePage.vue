@@ -8,8 +8,25 @@
       <p v-if="currentUser">Welcome, {{ currentUser.name }}!</p>
   
       <div class="filters-section">
-        <input v-model="searchQuery" type="text" placeholder="Where do you want to go?" class="filter-input" />
-        <div class="date-filter">
+          <div class="filter-group autocomplete-wrapper">
+            <input
+              v-model="searchQuery"
+              @input="onSearchInput"
+              @focus="onSearchInput"
+              @blur="onBlur"
+              type="text"
+              placeholder="Where do you want to go?"
+            />
+            <ul v-if="showCityMenu" class="suggestions">
+              <li
+                v-for="city in filteredCities"
+                :key="city"
+                @mousedown.prevent="chooseCity(city)"
+              >{{ city }}</li>
+            </ul>
+          </div>
+
+        <div class="date-filter filter-group">
           <label for="checkIn">Check-in</label>
           <input id="checkIn" v-model="checkIn" type="date" class="filter-input" />
         </div>
@@ -67,44 +84,54 @@
         allAmenities: [],
         showFilters: false,
         currentUser: null,
-        dateError: false
+        dateError: false,
+        citySuggestions: [],      // all unique city names
+        filteredCities: [],       // suggestions matching what they’ve typed
+        showCityMenu: false
       };
     },
     computed: {
       filteredSpots() {
-
+        const q = this.searchQuery.trim().toLowerCase();
         return this.spots.filter(spot => {
-        const matchesCity =  !this.searchQuery || 
-        (spot.city?.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ?? false);
-        const matchesPrice = this.maxPrice ? spot.base_price <= this.maxPrice : true;
-        const matchesAmenities = this.selectedAmenities.every(amenity =>
-          spot.amenities.includes(amenity)
-        );
-        if (this.checkIn && this.checkOut && new Date(this.checkIn) >= new Date(this.checkOut)) {
-          this.dateError = true;
+          // match city OR country
+          const cityName    = spot.city?.name?.toLowerCase()    || '';
+          const countryName = spot.country?.name?.toLowerCase() || '';
+          const matchesLocation = !q || cityName.includes(q) || countryName.includes(q);
 
-        } else {
-          this.dateError = false;
-        }
-        // Only check booking conflicts if both dates are selected
-        const hasDateConflict = () => {
-          if (!this.checkIn || !this.checkOut) return false;
+          const matchesPrice = this.maxPrice
+            ? spot.base_price <= this.maxPrice
+            : true;
 
-          const selectedStart = new Date(this.checkIn);
-          const selectedEnd = new Date(this.checkOut);
+          const matchesAmenities = this.selectedAmenities.every(amenity =>
+            spot.amenities.includes(amenity)
+          );
 
-          return spot.booking.some(booking => {
-            const bookingStart = new Date(booking.start_date);
-            const bookingEnd = new Date(booking.end_date);
+          // date‐error flag
+          if (this.checkIn && this.checkOut &&
+              new Date(this.checkIn) >= new Date(this.checkOut)) {
+            this.dateError = true;
+          } else {
+            this.dateError = false;
+          }
 
-            // Overlapping logic
-            return selectedStart < bookingEnd && selectedEnd > bookingStart;
-          });
-        };
+          // booking conflict
+          const hasDateConflict = () => {
+            if (!this.checkIn || !this.checkOut) return false;
+            const selStart = new Date(this.checkIn);
+            const selEnd   = new Date(this.checkOut);
+            return spot.booking.some(b => {
+              const bStart = new Date(b.start_date);
+              const bEnd   = new Date(b.end_date);
+              return selStart < bEnd && selEnd > bStart;
+            });
+          };
 
-        return matchesCity && matchesPrice && matchesAmenities && !hasDateConflict();
+          return matchesLocation &&
+                matchesPrice &&
+                matchesAmenities &&
+                !hasDateConflict();
         });
-        
       }
     },
     methods: {
@@ -153,6 +180,15 @@
             name: a.name
           }));
 
+          const pairs = new Map()
+          this.spots.forEach(s => {
+            if (s.city?.name && s.country?.name) {
+              const key = `${s.city.name}, ${s.country.name}`
+              pairs.set(key, true)
+            }
+          })
+          this.citySuggestions = Array.from(pairs.keys())
+
         } catch (error) {
           console.error('Error fetching spots or amenities:', error);
         }
@@ -162,10 +198,37 @@
       },
       goToSpotDetail(spot) {
         console.log("Spot clicked:", spot);
-        this.$emit('changePage', 'spotDetail', spot);
+        this.$emit('changePage', 'spotDetail', {
+          spot,
+          // pass what the user entered
+          checkIn: this.checkIn || null,
+          checkOut: this.checkOut || null
+        });
       },
       goToProfile() {
         this.$emit('changePage', 'profile');
+      },
+      onSearchInput() {
+        const q = this.searchQuery.toLowerCase().trim()
+        if (!q) {
+          this.filteredCities = []
+          this.showCityMenu = false
+          return
+        }
+        this.filteredCities = this.citySuggestions.filter(item =>
+          item.toLowerCase().includes(q)
+        )
+        this.showCityMenu = this.filteredCities.length > 0
+      },
+      chooseCity(item) {
+        this.searchQuery = item
+        this.showCityMenu = false
+      },
+      onBlur() {
+        // use the global setTimeout
+        window.setTimeout(() => {
+          this.showCityMenu = false;
+        }, 150);
       }
     },
     mounted() {
@@ -197,10 +260,12 @@
 
 .filters-section {
   display: flex;
+  flex-wrap: nowrap; /* wrap only if the screen is too small */
+  align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
+  overflow-x: auto; /* scroll on smaller screens */
+  padding-bottom: 0.5rem;
+  align-items: flex-end;
 }
 
 .filter-input {
@@ -220,6 +285,12 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  color: #4B5563;
+  margin-bottom: 0.3rem;
 }
 
 .map-view {
@@ -277,6 +348,34 @@
 
 .profile-icon-btn:hover .profile-icon {
   transform: scale(1.1);
+}
+.autocomplete-wrapper {
+  position: relative;
+  width: 250px;
+}
+.autocomplete-wrapper input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+.suggestions {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+.suggestions li {
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+.suggestions li:hover {
+  background: #f0f0f0;
 }
   </style>
   

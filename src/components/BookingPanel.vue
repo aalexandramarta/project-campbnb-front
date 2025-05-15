@@ -44,16 +44,26 @@ export default {
   name: 'BookingPanel',
   components: { Datepicker },
   props: {
-    spot: { type: Object, required: true }
+    spot: { type: Object, required: true },
+    initialCheckIn: { type: String, required: false, default: null },
+    initialCheckOut:{ type: String, required: false, default: null }
   },
   data() {
     return {
-      rawCheckIn: null,    // Date from the picker
-      rawCheckOut: null,   // Date from the picker
-      checkIn: null,       // DateTime at 14:00
-      checkOut: null,      // DateTime at 10:00
+      rawCheckIn: this.initialCheckIn ? new Date(this.initialCheckIn) : null,    // Date from before
+      rawCheckOut: this.initialCheckOut ? new Date(this.initialCheckOut) : null,   // Date from before
+      checkIn: null,       
+      checkOut: null,      
       dateError: false
     };
+  },
+  mounted() {
+  if (this.rawCheckIn) {
+    this.checkIn = new Date(this.rawCheckIn.getFullYear(), this.rawCheckIn.getMonth(), this.rawCheckIn.getDate(), 16, 0, 0);
+  }
+  if (this.rawCheckOut) {
+    this.checkOut = new Date(this.rawCheckOut.getFullYear(), this.rawCheckOut.getMonth(), this.rawCheckOut.getDate(), 12, 0, 0);
+  }
   },
   computed: {
     totalPrice() {
@@ -93,16 +103,15 @@ export default {
         const d  = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const ci = new Date(this.checkIn.getFullYear(), this.checkIn.getMonth(), this.checkIn.getDate());
 
-        // 1) never allow checkout on or before your checkIn
+        // no checkout on or before checkIn
         if (d <= ci) return true;
 
-        // 2) disable any d for which [ci, d) overlaps an existing booking
+        // check overlaps on existing bookings
         return this.spot.booking.some(b => {
           const s = new Date(b.start_date), e = new Date(b.end_date);
-          // normalize
           s.setHours(0,0,0,0);
           e.setHours(0,0,0,0);
-          // overlap happens if your checkIn < booking.end AND your chosen d > booking.start
+          // overlap happens if checkIn < booking.end and chosen day > booking.start
           return ci < e && d > s;
         });
       }
@@ -133,7 +142,7 @@ export default {
         return;
       }
 
-      // final safety check
+      // safety check
       const conflict = this.spot.booking.some(b => {
         const s = new Date(b.start_date);
         const e = new Date(b.end_date);

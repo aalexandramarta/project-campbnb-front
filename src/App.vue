@@ -13,7 +13,7 @@
       <HomePage @changePage="setActivePage" />
     </div>
     <div v-if="activePage === 'spotDetail'">
-      <SpotDetail :spot="selectedSpot" @changePage="setActivePage" @refreshUser="refreshUser"/>
+      <SpotDetail :spot="selectedSpot" :check-in="selectedCheckIn" :check-out="selectedCheckOut" @changePage="setActivePage" @refreshUser="refreshUser"/>
     </div>
     <div v-if="activePage === 'profile'">
       <ProfilePage @changePage="(page, spot) => setActivePage(page, spot)" />
@@ -27,6 +27,12 @@
     <div v-if="activePage === 'manageBooking'">
       <ManageBooking :booking="selectedBooking" @changePage="setActivePage" @refreshUser="refreshUser"/>
     </div>
+    <div v-if="activePage === 'forgotPass'">
+      <ForgotPass @changePage="setActivePage"/>
+    </div>
+    <div v-if="activePage === 'changePass'">
+    <ChangePass @changePage="setActivePage" />
+  </div>
     
   </div>
 </template>
@@ -42,6 +48,8 @@ import ProfilePage from './pages/ProfilePage.vue';
 import ManageProperty from './pages/ManageProperty.vue';
 import AddProperty from './pages/AddProperty.vue';
 import ManageBooking from './pages/ManageBooking.vue';
+import ForgotPass from './pages/ForgotPass.vue';
+import ChangePass from './pages/ChangePass.vue';
 
 
 export default {
@@ -51,7 +59,9 @@ export default {
       activePage: "welcome",
       selectedSpot: null,
       currentUser: null,
-      selectedBooking: null
+      selectedBooking: null,
+      selectedCheckIn: null,
+      selectedCheckOut: null,
     }
   },
   components: {
@@ -63,12 +73,21 @@ export default {
     ProfilePage,
     ManageProperty,
     AddProperty,
-    ManageBooking
+    ManageBooking,
+    ForgotPass,
+    ChangePass
+    
   },
   created() {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       this.currentUser = JSON.parse(storedUser);
+    }
+  },
+  mounted() {
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (token) {
+      this.activePage = "changePass"; 
     }
   },
   methods: {
@@ -78,20 +97,29 @@ export default {
       }
       this.activePage = page;
       if ((page === 'spotDetail' || page === 'propertyDetail') && data) {
-        this.selectedSpot = data;
+        if (data && data.spot) {
+        // passing dates
+         console.log('▶️ using new signature, dates:', data.checkIn, data.checkOut);
+        this.selectedSpot     = data.spot;
+        this.selectedCheckIn  = data.checkIn;
+        this.selectedCheckOut = data.checkOut;
+        } else {
+          this.selectedSpot     = data;
+          this.selectedCheckIn  = null;
+          this.selectedCheckOut = null;
+        }
       } else if (page === 'manageBooking') {
         this.selectedBooking = data;
         this.refreshUser();
       }
     },
     async refreshUser() {
-      // Fetch current user info if needed
+      // refresh current user info
       this.fetchCurrentUser(); 
-      // ALSO fetch properties
+      // fetch properties
       this.fetchUserProperties();
       },
     fetchUserProperties() {
-      // API call to your backend to get properties owned by the user
       fetch('http://localhost:3000/spot')
       .then(response => response.json())
       .then(data => {

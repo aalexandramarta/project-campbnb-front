@@ -2,7 +2,7 @@
     <div class="login-container">
       
       <LogoHeader></LogoHeader>
-      <h2>Log in</h2>
+      <h2>Forgot password</h2>
       <div class="form-section">
         <div class="input-section">
           <input
@@ -11,14 +11,11 @@
             placeholder="Email"
             v-model="email"
           />
-          <input
-            id="input_password"
-            type="password"
-            placeholder="Password"
-            v-model="password"
-          />
-          <button class="btn" @click="fetchUser">Log in</button>
-          <button @click="goToForgotPass">Forgot your password?</button>
+          <button class="btn"  @click="handleSend">Send</button>
+        
+        <p v-if="message" :style="{ color: messageType === 'error' ? 'red' : 'green' }">
+          {{ message }}
+        </p>
         </div>
       
     </div>
@@ -27,7 +24,6 @@
       <GoBackBtn @goBack="goBack" />
   </div>
   </template>
-
   <script>
   import GoBackBtn from '@/components/GoBackBtn.vue';
   import LogoHeader from '@/components/LogoHeader.vue';
@@ -41,45 +37,41 @@
   data() {
     return {
         email: "",
-        password: ""
+        message: '',
+        messageType: 'success', // or 'error'
     }
   },
   methods: {
     goBack() {
-      this.$emit('changePage', 'welcome');
+      this.$emit('changePage', 'login');
       },
-      goToForgotPass(){
-        this.$emit('changePage', 'forgotPass');
-      },
-      fetchUser() {
-        fetch("http://localhost:3000/user/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            email: this.email,
-            password: this.password
-          })
-        })
-        .then(async (response) => {
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Login failed");
+      async handleSend() {
+        if (!this.email) {
+        this.message = 'Please enter your email';
+        this.messageType = 'error';
+        return;
         }
-        return response.json();
-      })
-      .then((user) => {
-        console.log("Login successful:", user);
-        localStorage.setItem("user", JSON.stringify(user)); // Save user
-        this.$emit("loginSuccess", user);
-        this.$emit("changePage", "home"); // Navigate to homepage
-      })
-      .catch((err) => {
-        console.error("Login error:", err.message);
-        alert("Login failed: " + err.message);
-      });
-      }
+
+        try {
+        const response = await fetch('http://localhost:3000/password-reset/request', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: this.email })
+        });
+
+        if (!response.ok) {
+            throw new Error('Request failed');
+        }
+
+        this.message = 'Password reset link sent! Check your email.';
+        this.messageType = 'success';
+        } catch (err) {
+        this.message = 'Error sending reset link. Please try again.';
+        this.messageType = 'error';
+        }
+        }
       
     }
   }

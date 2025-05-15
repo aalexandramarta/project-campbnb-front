@@ -42,12 +42,14 @@
       </div>
 
       <button class="fav-btn" @click="toggleFavorite">
-          {{ isFavorited ? "♡ Remove from favorites" : "❤️ Add to favorites" }}
+          {{ isFavorited ? "❤️ Remove from favorites" : "♡ Add to favorites" }}
       </button>
 
       <div class="booking-panel">
         <BookingPanel
           :spot="resolvedSpot"
+          :initial-check-in="initialCheckIn"
+          :initial-check-out="initialCheckOut"
           @changePage="setActivePage"
           @bookingSuccess="reloadSpot"
         />
@@ -69,27 +71,50 @@ import BookingPanel from '@/components/BookingPanel.vue';
 export default {
   name: 'SpotDetailPage',
   components: { GoBackBtn, LogoHeader, BookingPanel },
-  props: ['spot'],
+  props: {
+    spot:            { type: Object, required: true },
+    checkIn:  { type: String, required: false, default: null },
+    checkOut: { type: String, required: false, default: null }
+  },
   data() {
     return {
       resolvedSpot: null,
-      isFavorited: false
+      isFavorited: false,
+      initialCheckIn: this.checkIn,
+      initialCheckOut:this.checkOut
     };
   },
   async mounted() {
-    const u = localStorage.getItem("user");
-    if (u) this.currentUser = JSON.parse(u);
+    //get the current user
+    const raw = localStorage.getItem('user');
+    this.currentUser = raw ? JSON.parse(raw) : null;
 
-    //set initial favorite state by checking spot.favorites
-    this.isFavorited = (this.spot.favorites || []).length > 0;
+    //load the spot details
+    if (this.spot?.spot_id) {
+      await this.loadSpot(this.spot.spot_id);
+    }
+
+    // check spot is in the user's favorites
+    this.isFavorited = Array.isArray(this.currentUser?.favorites) &&
+                      this.currentUser.favorites.some(fav => fav.spot_id === this.spot.spot_id);
+
+    console.log("SpotDetail mounted!", {
+      spot:      this.spot,
+      checkIn:   this.checkIn,
+      checkOut:  this.checkOut
+    });
+
   },
   watch: {
     spot: {
-      handler(newSpot) {
-        if (newSpot && newSpot.spot_id) {
-          this.loadSpot(newSpot.spot_id);
-        }
+        async handler(newSpot) {
+        if (!newSpot?.spot_id) return;
+        await this.loadSpot(newSpot.spot_id);
+        this.isFavorited = Array.isArray(this.currentUser?.favorites) &&
+                          this.currentUser.favorites.some(fav => fav.spot_id === newSpot.spot_id);
       },
+      checkIn(newVal)  { this.localCheckIn  = newVal; },
+      checkOut(newVal) { this.localCheckOut = newVal; },
       immediate: true,
       deep: true
     }
@@ -99,7 +124,7 @@ export default {
       try {
         const res = await fetch(`http://localhost:3000/spot/${id}`);
         const data = await res.json();
-        // Extract amenity names
+        // amenity names
         const amenities = (data.amenities_spots || [])
           .map(as => as.amenities?.name)
           .filter(Boolean);
@@ -125,34 +150,32 @@ export default {
         return;
       }
 
-      try {
-        if (this.isFavorited) {
-          // remove: DELETE /favorite/:id
-          const fav = this.spot.favorites[0];
-          await fetch(`http://localhost:3000/favorite/${fav.favorite_id}`, {
-            method: "DELETE"
-          });
-          this.isFavorited = false;
-        } else {
-          // add: POST /favorite
-          await fetch("http://localhost:3000/favorite", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              user_id: this.currentUser.user_id,
-              spot_id: this.spot.spot_id
-            })
-          });
-          this.isFavorited = true;
-        }
+    try {
+      if (this.isFavorited) {
+        // remove favorite
+        const fav = this.currentUser.favorites.find(f => f.spot_id === this.spot.spot_id);
+        await fetch(`http://localhost:3000/favorite/${fav.favorite_id}`, { method: 'DELETE' });
+        // remove it locally
+        this.currentUser.favorites = this.currentUser.favorites.filter(f => f.spot_id !== this.spot.spot_id);
+        this.isFavorited = false;
+      } else {
+        // add favorite
+        const res = await fetch("http://localhost:3000/favorite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: this.currentUser.user_id,
+            spot_id: this.spot.spot_id
+          })
+        });
+        const created = await res.json();
+        // add locally
+        this.currentUser.favorites.push(created);
+        this.isFavorited = true;
+      }
 
-        // re-fetch the spot (to update the `favorites` array)
-        const res = await fetch(
-          `http://localhost:3000/spot/${this.spot.spot_id}?user_id=${this.currentUser.user_id}`
-        );
-        const updated = await res.json();
-        // replace the current spot with the updated one
-        this.$emit("changePage", "spotDetail", updated);
+      // update user to localStorage
+      localStorage.setItem("user", JSON.stringify(this.currentUser));
 
       } catch (err) {
         console.error("Favorite toggle failed", err);
