@@ -6,6 +6,7 @@
       <div v-if="booking">
         <!-- Spot & Host Info -->
         <p><strong>Spot:</strong> {{ booking.camping_spot?.name }}</p>
+        <p><strong>Location:</strong> {{ booking.camping_spot?.location }}, {{ booking.camping_spot?.city?.name }}, {{ booking.camping_spot?.country?.name }}</p>
         <p><strong>Host:</strong> {{ booking.camping_spot?.user?.name }}</p>
         <p><strong>Host Email:</strong> {{ booking.camping_spot?.user?.email }}</p>
 

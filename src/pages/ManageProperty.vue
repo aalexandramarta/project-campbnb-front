@@ -53,7 +53,7 @@
       <!-- Bookings -->
       <div class="row">
         <label>Bookings</label>
-        <ul class="booking-list">
+        <ul class="booking-list" v-if="editableSpot.booking && editableSpot.booking.length" >
           <li v-for="booking in editableSpot.booking || []" :key="booking.booking_id">
             <span class="booker">
               <strong>{{ booking.user.name }}</strong>
@@ -69,6 +69,7 @@
             </span>
           </li>
         </ul>
+        <p v-else class="no-bookings">No bookings yet.</p>
       </div>
 
       <!-- Save All Button -->
@@ -127,7 +128,7 @@ export default {
     await this.fetchAmenities();
   },
   watch: {
-   // if parent hands us a new spot ID, reload from server
+   // if parent hands us a new spot ID, reload it
     spot() {
       this.loadSpot();
     }
@@ -402,7 +403,7 @@ export default {
   font-style: italic;
   margin: 0.25rem 0 0.75rem;
 }
-.no-reviews {
+.no-reviews .no-bookings {
   color: #888;
   font-style: italic;
 }

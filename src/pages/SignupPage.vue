@@ -2,7 +2,7 @@
     <div class="signup-container">
       <LogoHeader></LogoHeader> 
       <h2>Sign up</h2>
-      <!-- Signup form here -->
+      <!-- Signup form -->
       <div class="form-section">
         <input type="email" placeholder="Email" v-model="email" />
         <input type="text" placeholder="Name" v-model="name" />

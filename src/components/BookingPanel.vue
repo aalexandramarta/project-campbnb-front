@@ -75,10 +75,12 @@ export default {
 
     // For check-in: disable any date d where  start ≤ d < end
     disabledDatesCheckIn() {
+      const today = new Date();
+      today.setHours(0,0,0,0);
      return {
       customPredictor: date => {
         const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
+        if (d < today) return true;
         return this.spot.booking.some(b => {
           // normalize booking start & end to midnight:
           const startDay = new Date(b.start_date);
@@ -122,7 +124,7 @@ export default {
     onSelectCheckIn(val) {
       this.rawCheckIn = val;
       if (val) {
-        this.checkIn = new Date(val.getFullYear(), val.getMonth(), val.getDate(), 16, 0, 0);
+        this.checkIn = new Date(val.getFullYear(), val.getMonth(), val.getDate(), 16, 0, 0); //14:00
       } else {
         this.checkIn = null;
       }
@@ -130,7 +132,7 @@ export default {
     onSelectCheckOut(val) {
       this.rawCheckOut = val;
       if (val) {
-        this.checkOut = new Date(val.getFullYear(), val.getMonth(), val.getDate(), 12, 0, 0);
+        this.checkOut = new Date(val.getFullYear(), val.getMonth(), val.getDate(), 12, 0, 0); //10:00
       } else {
         this.checkOut = null;
       }

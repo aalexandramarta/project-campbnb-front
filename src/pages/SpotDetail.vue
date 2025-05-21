@@ -72,7 +72,7 @@ export default {
   name: 'SpotDetailPage',
   components: { GoBackBtn, LogoHeader, BookingPanel },
   props: {
-    spot:            { type: Object, required: true },
+    spot:     { type: Object, required: true },
     checkIn:  { type: String, required: false, default: null },
     checkOut: { type: String, required: false, default: null }
   },
@@ -87,7 +87,7 @@ export default {
   async mounted() {
     //get the current user
     const raw = localStorage.getItem('user');
-    this.currentUser = raw ? JSON.parse(raw) : null;
+    this.currentUser = raw ? JSON.parse(raw) : null; //if raw has a vaule parse it to a JSON object otherwise null
 
     //load the spot details
     if (this.spot?.spot_id) {
@@ -127,13 +127,13 @@ export default {
         // amenity names
         const amenities = (data.amenities_spots || [])
           .map(as => as.amenities?.name)
-          .filter(Boolean);
+          .filter(Boolean); //drops false entries
         this.resolvedSpot = { ...data, amenities };
       } catch (err) {
         console.error('Error loading spot:', err);
       }
     },
-    reloadSpot() {
+    reloadSpot() { 
       if (this.resolvedSpot?.spot_id) {
         this.loadSpot(this.resolvedSpot.spot_id);
       }
@@ -239,7 +239,7 @@ export default {
   padding: 0.5rem 0; 
 }
 .fav-btn {
-  background-color: #2563eb;
+  background-color: #176a02;
   color: white;
   padding: 0.5rem 1rem;
   border: none;

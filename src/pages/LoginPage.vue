@@ -57,7 +57,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
+          body: JSON.stringify({ //converts into a JSON string and includes it in the request body
             email: this.email,
             password: this.password
           })
@@ -71,7 +71,7 @@
       })
       .then((user) => {
         console.log("Login successful:", user);
-        localStorage.setItem("user", JSON.stringify(user)); // Save user
+        localStorage.setItem("user", JSON.stringify(user)); // Save user in the local storage
         this.$emit("loginSuccess", user);
         this.$emit("changePage", "home"); // Navigate to homepage
       })

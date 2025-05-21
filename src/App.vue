@@ -99,7 +99,7 @@ export default {
       if ((page === 'spotDetail' || page === 'propertyDetail') && data) {
         if (data && data.spot) {
         // passing dates
-         console.log('▶️ using new signature, dates:', data.checkIn, data.checkOut);
+         console.log('using new signature, dates:', data.checkIn, data.checkOut);
         this.selectedSpot     = data.spot;
         this.selectedCheckIn  = data.checkIn;
         this.selectedCheckOut = data.checkOut;

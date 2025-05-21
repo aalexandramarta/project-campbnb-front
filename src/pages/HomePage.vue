@@ -4,11 +4,11 @@
       <button class="profile-icon-btn" @click="goToProfile">
         <img src="@/assets/profile-icon.png" alt="My Profile" class="profile-icon" />
       </button>
-      <h2 class="page-heading">Home page</h2>
-      <p v-if="currentUser">Welcome, {{ currentUser.name }}!</p>
+      <!-- <h2 class="page-heading">Home page</h2> -->
+      <p v-if="currentUser" class="page-heading">Welcome, {{ currentUser.name }}!</p>
   
       <div class="filters-section">
-          <div class="filter-group autocomplete-wrapper">
+          <div class="location-search filter-group autocomplete-wrapper">
             <input
               v-model="searchQuery"
               @input="onSearchInput"
@@ -31,7 +31,7 @@
           <input id="checkIn" v-model="checkIn" type="date" class="filter-input" />
         </div>
 
-        <div class="date-filter">
+        <div class="date-filter filter-group">
           <label for="checkOut">Check-out</label>
           <input id="checkOut" v-model="checkOut" type="date" class="filter-input" />
         </div>
@@ -54,8 +54,6 @@
         
       </div>
       <p v-if="dateError" class="error-message">Check-in date must be before check-out date.</p>
-  
-      <!-- <div class="map-view">Map view</div> -->
   
       <div class="spot-cards">
         <SpotCard v-for="spot in filteredSpots" :key="spot.spot_id" :spot="spot" @spotClicked="goToSpotDetail"/>
@@ -103,7 +101,7 @@
             ? spot.base_price <= this.maxPrice
             : true;
 
-          const matchesAmenities = this.selectedAmenities.every(amenity =>
+          const matchesAmenities = this.selectedAmenities.every(amenity => //if every callback is true it returns true
             spot.amenities.includes(amenity)
           );
 
@@ -225,7 +223,7 @@
         this.showCityMenu = false
       },
       onBlur() {
-        // use the global setTimeout
+        // the global setTimeout
         window.setTimeout(() => {
           this.showCityMenu = false;
         }, 150);
@@ -256,6 +254,9 @@
   font-size: 1.5rem;
   margin-bottom: 1rem;
   color: #6b7280;
+}
+.location-search {
+  margin-right: 1rem;
 }
 
 .filters-section {

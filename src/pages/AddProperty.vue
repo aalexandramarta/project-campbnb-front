@@ -1,5 +1,6 @@
 <template>
     <div class="add-property">
+      <LogoHeader></LogoHeader>
       <h2>Add New Property</h2>
   
       <form @submit.prevent="submitSpot">
@@ -58,12 +59,19 @@
   
         <button type="submit">Create Property</button>
       </form>
+      <GoBackBtn @goBack="goBack" />
     </div>
   </template>
   
   <script>
+  import GoBackBtn from '@/components/GoBackBtn.vue';
+  import LogoHeader from '@/components/LogoHeader.vue';
   export default {
     name: 'AddProperty',
+    components: {
+      GoBackBtn,
+      LogoHeader
+    },
     props: ['currentUser'],
     data() {
       return {
@@ -88,6 +96,9 @@
       };
     },
     methods: {
+      goBack() {
+      this.$emit('changePage', 'profile');
+      },
       async fetchAmenities() {
         try {
           const res = await fetch('http://localhost:3000/amenitie');

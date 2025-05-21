@@ -57,7 +57,7 @@
         <h3>My Properties</h3>
         <ul v-if="userSpots.length" class="properties-list">
           <li v-for="spot in userSpots" :key="spot.spot_id" class="property-item">
-            <div>{{ spot.name }} — {{ spot.location }}</div>
+            <div><strong>{{ spot.name }}</strong> — {{ spot.location }}</div>
             <button class="manage-btn" @click="manageProperty(spot)">Manage</button>
           </li>
         </ul>
@@ -118,11 +118,15 @@ export default {
       this.isEditing = false;
     },
     async saveChanges() {
+      const payload = {
+        name: this.editedUser.name,
+        email: this.editedUser.email,
+      };
       try {
         const res = await fetch(`http://localhost:3000/user/${this.user.user_id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.editedUser)
+          body: JSON.stringify(payload)
         });
         if (res.ok) await this.refreshUserData();
         this.isEditing = false;
@@ -183,7 +187,7 @@ export default {
   border-radius: 4px;
 }
 .edit-btn {
-  background: #10b981;
+  background: #176a02;
   color: #fff;
   border: none;
   padding: 0.3rem 0.8rem;
@@ -196,7 +200,7 @@ export default {
   gap: 0.5rem;
 }
 .save-btn { 
-  background: #2563eb; 
+  background: #176a02; 
   color: #fff; 
   border:none; 
   padding:0.4rem 1rem; 
